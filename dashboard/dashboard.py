@@ -113,11 +113,11 @@ for acc in map(str, unique_accounts):
         size = 15
 
     tooltip = (
-        f"<b>Account:</b> {acc}<br>"
-        f"<b>Risk Score:</b> {score}<br>"
-        f"<b>Risk Level:</b> {level}<br><br>"
-        f"<b>Reasons:</b><br>"
-        + "<br>".join(reasons)
+        f"Account: {acc}\n"
+        f"Risk Score: {score}\n"
+        f"Risk Level: {level}\n\n"
+        f"Reasons:\n"
+        + "\n".join(f"- {r}" for r in reasons)
     )
 
     net.add_node(
