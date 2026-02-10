@@ -1,0 +1,46 @@
+# =========================
+# Python
+# =========================
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.log
+
+# =========================
+# Virtual Environment
+# =========================
+venv/
+.env
+
+# =========================
+# OS / Editor
+# =========================
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# =========================
+# Streamlit / PyVis
+# =========================
+*.html
+.streamlit/
+
+# =========================
+# Data (keep CSVs tracked if demo data)
+# =========================
+# Uncomment below if you later use real data
+# data/*.csv
+
+# =========================
+# Build / Export
+# =========================
+*.zip
+*.tar.gz
+
+# =========================
+# Reports / PPT exports
+# =========================
+report/*.pdf
+ppt/*.pptx

@@ -1,0 +1,17 @@
+account_id,account_age_days,account_type
+u1@upi,300,personal
+u2@upi,400,personal
+u3@upi,250,personal
+,,
+mule_star@upi,10,personal
+mule_chain1@upi,12,personal
+mule_chain2@upi,12,personal
+mule_chain3@upi,12,personal
+mule_loop1@upi,8,personal
+mule_loop2@upi,8,personal
+mule_loop3@upi,8,personal
+,,
+sink@upi,900,merchant
+merchant@upi,1200,merchant
+legit1@upi,600,personal
+legit2@upi,700,personal

@@ -1,0 +1,174 @@
+import streamlit as st
+import pandas as pd
+from pyvis.network import Network
+import tempfile
+import os
+
+# Import scoring logic
+from backend.api.score import score_account
+
+# -------------------------------
+# Streamlit Page Config
+# -------------------------------
+st.set_page_config(
+    page_title="UPI Mule Account Detection",
+    layout="wide"
+)
+
+st.title("🚨 UPI Mule Account Detection Dashboard")
+st.markdown(
+    """
+This dashboard visualizes **mule account behavior in UPI** using  
+**transaction graphs + explainable risk scoring**.
+"""
+)
+
+# -------------------------------
+# Load Data
+# -------------------------------
+txns = pd.read_csv("data/transactions.csv")
+
+# -------------------------------
+# Top Metrics
+# -------------------------------
+col1, col2, col3 = st.columns(3)
+
+with col1:
+    st.metric("Total Transactions", len(txns))
+
+with col2:
+    st.metric(
+        "Unique Accounts",
+        pd.concat([txns["sender"], txns["receiver"]]).nunique()
+    )
+
+with col3:
+    high_risk = 0
+    for acc in set(txns["sender"]).union(set(txns["receiver"])):
+        if score_account(acc)["risk_level"] == "HIGH":
+            high_risk += 1
+    st.metric("High Risk Accounts", high_risk)
+
+# -------------------------------
+# Transaction Table
+# -------------------------------
+st.subheader("📄 Transaction Data")
+st.dataframe(txns, use_container_width=True)
+
+# -------------------------------
+# Risk-Aware Transaction Network
+# -------------------------------
+st.subheader("🕸️ Risk-Aware Transaction Network")
+
+net = Network(
+    height="550px",
+    width="100%",
+    directed=True,
+    notebook=False,
+    bgcolor="#ffffff"
+)
+
+# Unique accounts
+accounts = set(txns["sender"]).union(set(txns["receiver"]))
+
+# -------------------------------
+# Add Nodes with Risk-Based Styling
+# -------------------------------
+for acc in accounts:
+    result = score_account(acc)
+    score = result["risk_score"]
+    level = result["risk_level"]
+    reasons = result["reasons"]
+
+    # Color & size mapping
+    if level == "HIGH":
+        color = "red"
+        size = 35
+    elif level == "MEDIUM":
+        color = "orange"
+        size = 25
+    else:
+        color = "lightblue"
+        size = 15
+
+    tooltip = (
+        f"<b>Account:</b> {acc}<br>"
+        f"<b>Risk Score:</b> {score}<br>"
+        f"<b>Risk Level:</b> {level}<br><br>"
+        f"<b>Reasons:</b><br>"
+        + "<br>".join(reasons if reasons else ["No suspicious activity"])
+    )
+
+    net.add_node(
+        acc,
+        label=acc,
+        color=color,
+        size=size,
+        title=tooltip
+    )
+
+# -------------------------------
+# Add Transaction Edges
+# -------------------------------
+for _, row in txns.iterrows():
+    net.add_edge(
+        row["sender"],
+        row["receiver"],
+        value=row["amount"],
+        arrowStrikethrough=False
+    )
+
+# -------------------------------
+# Render Graph Safely (Windows Fix)
+# -------------------------------
+with tempfile.NamedTemporaryFile(delete=False, suffix=".html") as tmp:
+    net.save_graph(tmp.name)
+    html_path = tmp.name
+
+with open(html_path, "r", encoding="utf-8") as f:
+    html_content = f.read()
+
+st.components.v1.html(html_content, height=600, scrolling=True)
+
+os.remove(html_path)
+
+# -------------------------------
+# Legend / Explanation
+# -------------------------------
+st.subheader("🎨 Risk Color Legend")
+st.markdown(
+    """
+- 🔴 **Red** → High Risk Mule Account  
+- 🟠 **Orange** → Medium Risk (Suspicious)  
+- 🔵 **Blue** → Legitimate Account  
+
+**Node size increases with risk severity.**
+"""
+)
+
+# -------------------------------
+# Explainability Panel
+# -------------------------------
+st.subheader("🧠 How Risk is Calculated")
+st.markdown(
+    """
+Each account is scored using **three independent signals**:
+
+1. **Behavioral Analysis**
+   - Sudden transaction spikes
+   - New accounts with rapid activity
+
+2. **Graph Analysis**
+   - Star patterns (many → one → one)
+   - Chain laundering paths
+   - Circular fund movement (loops)
+
+3. **Device Correlation**
+   - Same device controlling multiple accounts
+
+Scores are **boosted when multiple signals correlate**,  
+reducing false positives while strongly flagging organized fraud.
+"""
+)
+
+st.success("✅ Prototype ready for CSIC Stage-III demo")

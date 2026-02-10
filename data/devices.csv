@@ -1,0 +1,16 @@
+device_id,account_id
+dev_m1,mule_star@upi
+dev_m1,u1@upi
+dev_m1,u2@upi
+dev_m1,u3@upi
+,
+dev_m2,mule_chain1@upi
+dev_m2,mule_chain2@upi
+dev_m2,mule_chain3@upi
+,
+dev_m3,mule_loop1@upi
+dev_m3,mule_loop2@upi
+dev_m3,mule_loop3@upi
+,
+dev_l1,legit1@upi
+dev_l2,legit2@upi

@@ -1,0 +1,16 @@
+txn_id,sender,receiver,amount,timestamp,device_id
+1,u1@upi,mule_star@upi,5000,2025-02-01T10:00:00,dev_m1
+2,u2@upi,mule_star@upi,4800,2025-02-01T10:01:00,dev_m1
+3,u3@upi,mule_star@upi,5200,2025-02-01T10:02:00,dev_m1
+4,mule_star@upi,sink@upi,14500,2025-02-01T10:03:00,dev_m1
+,,,,,
+5,mule_chain1@upi,mule_chain2@upi,3000,2025-02-01T11:00:00,dev_m2
+6,mule_chain2@upi,mule_chain3@upi,2900,2025-02-01T11:02:00,dev_m2
+7,mule_chain3@upi,sink@upi,2800,2025-02-01T11:04:00,dev_m2
+,,,,,
+8,mule_loop1@upi,mule_loop2@upi,2000,2025-02-01T12:00:00,dev_m3
+9,mule_loop2@upi,mule_loop3@upi,1900,2025-02-01T12:02:00,dev_m3
+10,mule_loop3@upi,mule_loop1@upi,1800,2025-02-01T12:04:00,dev_m3
+,,,,,
+11,legit1@upi,merchant@upi,1200,2025-02-01T13:00:00,dev_l1
+12,legit2@upi,merchant@upi,1500,2025-02-01T13:05:00,dev_l2
