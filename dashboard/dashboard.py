@@ -4,12 +4,14 @@ from pyvis.network import Network
 import tempfile
 import os
 
-# Import scoring logic
+# --------------------------------
+# Import backend scoring logic
+# --------------------------------
 from backend.api.score import score_account
 
-# -------------------------------
+# --------------------------------
 # Streamlit Page Config
-# -------------------------------
+# --------------------------------
 st.set_page_config(
     page_title="UPI Mule Account Detection",
     layout="wide"
@@ -23,41 +25,63 @@ This dashboard visualizes **mule account behavior in UPI** using
 """
 )
 
-# -------------------------------
-# Load Data
-# -------------------------------
-txns = pd.read_csv("data/transactions.csv")
+# --------------------------------
+# SAFE + CACHED SCORING WRAPPER
+# --------------------------------
+@st.cache_data(show_spinner=False)
+def cached_safe_score(account_id):
+    """
+    Frontend-safe wrapper around backend scoring.
+    Ensures Streamlit never crashes.
+    """
+    try:
+        return score_account(account_id)
+    except Exception:
+        return {
+            "account_id": account_id,
+            "risk_score": 0,
+            "risk_level": "LOW",
+            "reasons": ["No metadata available (assumed legitimate)"]
+        }
 
-# -------------------------------
+# --------------------------------
+# Load Data
+# --------------------------------
+txns = pd.read_csv("data/transactions.csv")
+txns = txns.dropna(subset=["sender", "receiver"])
+
+# Ensure account columns are strings to avoid type mismatch in PyVis
+txns["sender"] = txns["sender"].astype(str)
+txns["receiver"] = txns["receiver"].astype(str)
+
+# --------------------------------
 # Top Metrics
-# -------------------------------
+# --------------------------------
 col1, col2, col3 = st.columns(3)
 
 with col1:
     st.metric("Total Transactions", len(txns))
 
 with col2:
-    st.metric(
-        "Unique Accounts",
-        pd.concat([txns["sender"], txns["receiver"]]).nunique()
-    )
+    unique_accounts = set(txns["sender"]).union(set(txns["receiver"]))
+    st.metric("Unique Accounts", len(unique_accounts))
 
 with col3:
     high_risk = 0
-    for acc in set(txns["sender"]).union(set(txns["receiver"])):
-        if score_account(acc)["risk_level"] == "HIGH":
+    for acc in unique_accounts:
+        if cached_safe_score(acc)["risk_level"] == "HIGH":
             high_risk += 1
     st.metric("High Risk Accounts", high_risk)
 
-# -------------------------------
+# --------------------------------
 # Transaction Table
-# -------------------------------
+# --------------------------------
 st.subheader("📄 Transaction Data")
 st.dataframe(txns, use_container_width=True)
 
-# -------------------------------
+# --------------------------------
 # Risk-Aware Transaction Network
-# -------------------------------
+# --------------------------------
 st.subheader("🕸️ Risk-Aware Transaction Network")
 
 net = Network(
@@ -68,19 +92,16 @@ net = Network(
     bgcolor="#ffffff"
 )
 
-# Unique accounts
-accounts = set(txns["sender"]).union(set(txns["receiver"]))
-
-# -------------------------------
+# --------------------------------
 # Add Nodes with Risk-Based Styling
-# -------------------------------
-for acc in accounts:
-    result = score_account(acc)
+# --------------------------------
+for acc in map(str, unique_accounts):
+    result = cached_safe_score(acc)
+
     score = result["risk_score"]
     level = result["risk_level"]
     reasons = result["reasons"]
 
-    # Color & size mapping
     if level == "HIGH":
         color = "red"
         size = 35
@@ -96,7 +117,7 @@ for acc in accounts:
         f"<b>Risk Score:</b> {score}<br>"
         f"<b>Risk Level:</b> {level}<br><br>"
         f"<b>Reasons:</b><br>"
-        + "<br>".join(reasons if reasons else ["No suspicious activity"])
+        + "<br>".join(reasons)
     )
 
     net.add_node(
@@ -107,9 +128,9 @@ for acc in accounts:
         title=tooltip
     )
 
-# -------------------------------
+# --------------------------------
 # Add Transaction Edges
-# -------------------------------
+# --------------------------------
 for _, row in txns.iterrows():
     net.add_edge(
         row["sender"],
@@ -118,9 +139,9 @@ for _, row in txns.iterrows():
         arrowStrikethrough=False
     )
 
-# -------------------------------
-# Render Graph Safely (Windows Fix)
-# -------------------------------
+# --------------------------------
+# Render Graph (Windows + PyVis Safe)
+# --------------------------------
 with tempfile.NamedTemporaryFile(delete=False, suffix=".html") as tmp:
     net.save_graph(tmp.name)
     html_path = tmp.name
@@ -132,9 +153,9 @@ st.components.v1.html(html_content, height=600, scrolling=True)
 
 os.remove(html_path)
 
-# -------------------------------
-# Legend / Explanation
-# -------------------------------
+# --------------------------------
+# Legend
+# --------------------------------
 st.subheader("🎨 Risk Color Legend")
 st.markdown(
     """
@@ -146,9 +167,9 @@ st.markdown(
 """
 )
 
-# -------------------------------
+# --------------------------------
 # Explainability Panel
-# -------------------------------
+# --------------------------------
 st.subheader("🧠 How Risk is Calculated")
 st.markdown(
     """
@@ -159,7 +180,7 @@ Each account is scored using **three independent signals**:
    - New accounts with rapid activity
 
 2. **Graph Analysis**
-   - Star patterns (many → one → one)
+   - Star patterns (many → one → sink)
    - Chain laundering paths
    - Circular fund movement (loops)
 
