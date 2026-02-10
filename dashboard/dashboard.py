@@ -3,17 +3,20 @@ import pandas as pd
 from pyvis.network import Network
 import tempfile
 import os
+import networkx as nx
 
 # --------------------------------
 # Import backend scoring logic
 # --------------------------------
-from backend.api.score import score_account
+from backend.api.score import batch_score_accounts
+from backend.utils.data_loader import load_accounts, load_devices
+from backend.core.graph_analysis import build_transaction_graph
 
 # --------------------------------
 # Streamlit Page Config
 # --------------------------------
 st.set_page_config(
-    page_title="UPI Mule Account Detection",
+    page_title="UPI Mule Account Detection Dashboard",
     layout="wide"
 )
 
@@ -26,33 +29,35 @@ This dashboard visualizes **mule account behavior in UPI** using
 )
 
 # --------------------------------
-# SAFE + CACHED SCORING WRAPPER
+# Resource Loading (Cached)
 # --------------------------------
-@st.cache_data(show_spinner=False)
-def cached_safe_score(account_id):
-    """
-    Frontend-safe wrapper around backend scoring.
-    Ensures Streamlit never crashes.
-    """
-    try:
-        return score_account(account_id)
-    except Exception:
-        return {
-            "account_id": account_id,
-            "risk_score": 0,
-            "risk_level": "LOW",
-            "reasons": ["No metadata available (assumed legitimate)"]
-        }
+@st.cache_resource(show_spinner="Loading data models & building graph...")
+def load_all_resources():
+    # Load Transactions
+    txns = pd.read_csv("data/transactions.csv")
+    txns["sender"] = txns["sender"].astype(str)
+    txns["receiver"] = txns["receiver"].astype(str)
 
-# --------------------------------
-# Load Data
-# --------------------------------
-txns = pd.read_csv("data/transactions.csv")
-txns = txns.dropna(subset=["sender", "receiver"])
+    # Load other metadata
+    accounts = load_accounts()
+    devices = load_devices()
 
-# Ensure account columns are strings to avoid type mismatch in PyVis
-txns["sender"] = txns["sender"].astype(str)
-txns["receiver"] = txns["receiver"].astype(str)
+    # Build Graph once (vectorized, fast)
+    G = build_transaction_graph(txns)
+
+    # Precompute unique accounts
+    unique_accounts = sorted(
+        set(txns["sender"].dropna()) | set(txns["receiver"].dropna())
+    )
+
+    # Batch-score ALL accounts in one pass
+    # (graph cycle detection runs once, not per-account)
+    scores = batch_score_accounts(unique_accounts, txns, accounts, devices, G)
+
+    return txns, accounts, devices, G, unique_accounts, scores
+
+# Load resources
+txns, accounts, devices, G, unique_accounts, scores = load_all_resources()
 
 # --------------------------------
 # Top Metrics
@@ -63,95 +68,119 @@ with col1:
     st.metric("Total Transactions", len(txns))
 
 with col2:
-    unique_accounts = set(txns["sender"]).union(set(txns["receiver"]))
     st.metric("Unique Accounts", len(unique_accounts))
 
 with col3:
-    high_risk = 0
-    for acc in unique_accounts:
-        if cached_safe_score(acc)["risk_level"] == "HIGH":
-            high_risk += 1
+    high_risk = sum(1 for s in scores.values() if s["risk_level"] == "HIGH")
     st.metric("High Risk Accounts", high_risk)
 
 # --------------------------------
 # Transaction Table
 # --------------------------------
 st.subheader("📄 Transaction Data")
-st.dataframe(txns, use_container_width=True)
+st.dataframe(txns, width="stretch")
 
 # --------------------------------
-# Risk-Aware Transaction Network
+# Lazy-load Graph (IMPORTANT)
 # --------------------------------
 st.subheader("🕸️ Risk-Aware Transaction Network")
 
-net = Network(
-    height="550px",
-    width="100%",
-    directed=True,
-    notebook=False,
-    bgcolor="#ffffff"
-)
-
-# --------------------------------
-# Add Nodes with Risk-Based Styling
-# --------------------------------
-for acc in map(str, unique_accounts):
-    result = cached_safe_score(acc)
-
-    score = result["risk_score"]
-    level = result["risk_level"]
-    reasons = result["reasons"]
-
-    if level == "HIGH":
-        color = "red"
-        size = 35
-    elif level == "MEDIUM":
-        color = "orange"
-        size = 25
-    else:
-        color = "lightblue"
-        size = 15
-
-    tooltip = (
-        f"Account: {acc}\n"
-        f"Risk Score: {score}\n"
-        f"Risk Level: {level}\n\n"
-        f"Reasons:\n"
-        + "\n".join(f"- {r}" for r in reasons)
+# Controls for scalability
+gcol1, gcol2 = st.columns([1, 3])
+with gcol1:
+    show_graph = st.checkbox(
+        "Show transaction network graph",
+        value=False,
+    )
+with gcol2:
+    max_nodes = st.slider(
+        "Max nodes to display",
+        min_value=20,
+        max_value=min(len(unique_accounts), 500),
+        value=min(len(unique_accounts), 100),
+        step=10,
+        help="Limit nodes for large datasets to keep the graph responsive.",
     )
 
-    net.add_node(
-        acc,
-        label=acc,
-        color=color,
-        size=size,
-        title=tooltip
-    )
+if show_graph:
+    with st.spinner("Rendering graph..."):
+        # Prioritise high-risk accounts so they always appear
+        sorted_accounts = sorted(
+            unique_accounts,
+            key=lambda a: scores.get(a, {}).get("risk_score", 0),
+            reverse=True,
+        )
+        visible_accounts = set(sorted_accounts[:max_nodes])
 
-# --------------------------------
-# Add Transaction Edges
-# --------------------------------
-for _, row in txns.iterrows():
-    net.add_edge(
-        row["sender"],
-        row["receiver"],
-        value=row["amount"],
-        arrowStrikethrough=False
-    )
+        net = Network(
+            height="550px",
+            width="100%",
+            directed=True,
+            notebook=False,
+            bgcolor="#ffffff",
+        )
 
-# --------------------------------
-# Render Graph (Windows + PyVis Safe)
-# --------------------------------
-with tempfile.NamedTemporaryFile(delete=False, suffix=".html") as tmp:
-    net.save_graph(tmp.name)
-    html_path = tmp.name
+        # ----------------------------
+        # Add Nodes with Risk Styling (from precomputed scores)
+        # ----------------------------
+        for acc in visible_accounts:
+            result = scores.get(acc, {"risk_score": 0, "risk_level": "LOW", "reasons": []})
 
-with open(html_path, "r", encoding="utf-8") as f:
-    html_content = f.read()
+            score_val = result["risk_score"]
+            level = result["risk_level"]
+            reasons = result.get("reasons", [])
 
-st.components.v1.html(html_content, height=600, scrolling=True)
+            if level == "HIGH":
+                color = "red"
+                size = 35
+            elif level == "MEDIUM":
+                color = "orange"
+                size = 25
+            else:
+                color = "lightblue"
+                size = 15
 
-os.remove(html_path)
+            tooltip = (
+                f"<b>Account:</b> {acc}<br>"
+                f"<b>Risk Score:</b> {score_val}<br>"
+                f"<b>Risk Level:</b> {level}<br><br>"
+                f"<b>Reasons:</b><br>"
+                + "<br>".join(reasons)
+            )
+
+            net.add_node(
+                acc,
+                label=acc,
+                color=color,
+                size=size,
+                title=tooltip,
+            )
+
+        # ----------------------------
+        # Add Edges (only between visible nodes)
+        # ----------------------------
+        for _, row in txns.iterrows():
+            s, r = str(row["sender"]), str(row["receiver"])
+            if s in visible_accounts and r in visible_accounts:
+                net.add_edge(s, r, value=row["amount"])
+
+        # ----------------------------
+        # Render Graph (Windows Safe)
+        # ----------------------------
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".html") as tmp:
+            net.save_graph(tmp.name)
+            html_path = tmp.name
+
+        with open(html_path, "r", encoding="utf-8") as f:
+            st.components.v1.html(f.read(), height=600, scrolling=True)
+
+        os.remove(html_path)
+
+        if len(unique_accounts) > max_nodes:
+            st.info(
+                f"Showing top {max_nodes} accounts (sorted by risk). "
+                f"Increase the slider to see more."
+            )
 
 # --------------------------------
 # Legend
@@ -180,15 +209,15 @@ Each account is scored using **three independent signals**:
    - New accounts with rapid activity
 
 2. **Graph Analysis**
-   - Star patterns (many → one → sink)
+   - Star aggregation patterns
    - Chain laundering paths
    - Circular fund movement (loops)
 
 3. **Device Correlation**
    - Same device controlling multiple accounts
 
-Scores are **boosted when multiple signals correlate**,  
-reducing false positives while strongly flagging organized fraud.
+When multiple signals correlate, the system **boosts confidence**  
+to strongly flag organized mule networks while keeping false positives low.
 """
 )
 
