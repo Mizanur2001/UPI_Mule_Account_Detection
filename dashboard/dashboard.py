@@ -78,7 +78,7 @@ with col3:
 # Transaction Table
 # --------------------------------
 st.subheader("📄 Transaction Data")
-st.dataframe(txns, width="stretch")
+st.dataframe(txns, use_container_width=True)
 
 # --------------------------------
 # Lazy-load Graph (IMPORTANT)
