@@ -1,16 +1,46 @@
 def device_risk(account, device_df):
+    """
+    Detects device-based fraud: same device controlling multiple accounts
+    """
     score = 0
     reasons = []
 
+    # Get all devices linked to this account
     linked_accounts = device_df[device_df["account_id"] == account]
+    
+    if len(linked_accounts) == 0:
+        return 0, ["No device data available"]
 
-    device_ids = linked_accounts["device_id"].tolist()
-    shared = device_df[device_df["device_id"].isin(device_ids)]
+    device_ids = linked_accounts["device_id"].unique().tolist()
+    
+    # Find all accounts using any of these devices
+    shared_device_df = device_df[device_df["device_id"].isin(device_ids)]
+    unique_accounts = shared_device_df["account_id"].unique()
+    unique_accounts = [a for a in unique_accounts if a != account]  # Exclude self
+    
+    accounts_on_shared_devices = len(unique_accounts)
+    num_devices = len(device_ids)
 
-    unique_accounts = shared["account_id"].nunique()
-
-    if unique_accounts >= 3:
+    # DEVICE CONCENTRATION RISK
+    if accounts_on_shared_devices >= 10:
+        score += 50
+        reasons.append(f"Device shared across {accounts_on_shared_devices} other accounts (very high concentration)")
+    elif accounts_on_shared_devices >= 5:
         score += 40
-        reasons.append("Shared device across multiple accounts")
+        reasons.append(f"Device shared across {accounts_on_shared_devices} other accounts")
+    elif accounts_on_shared_devices >= 3:
+        score += 30
+        reasons.append(f"Shared device controlling {accounts_on_shared_devices} accounts (aggregator network)")
+    elif accounts_on_shared_devices >= 2:
+        score += 15
+        reasons.append(f"Device linked to {accounts_on_shared_devices} other accounts")
 
-    return min(score, 100), reasons
+    # MULTI-DEVICE CONTROL RISK
+    if num_devices >= 5:
+        score += 30
+        reasons.append(f"Account controlled from {num_devices} different devices (high rotation)")
+    elif num_devices >= 3:
+        score += 20
+        reasons.append(f"Multiple device usage ({num_devices} devices) - possible spoofing")
+
+    return min(int(score), 100), reasons

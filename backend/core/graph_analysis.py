@@ -74,6 +74,7 @@ def batch_graph_risk(G):
     """
     Returns dict  {account_id: (score, [reasons])}  for every node in G.
     Runs the expensive cycle detection ONCE, then scores each node in O(1).
+    Enhanced with detailed pattern metrics.
     """
     cycle_members = _find_cycle_members(G, max_len=6)
     results = {}
@@ -85,22 +86,49 @@ def batch_graph_risk(G):
         in_deg = G.in_degree(account)
         out_deg = G.out_degree(account)
 
-        # Star pattern
-        if in_deg >= 3 and out_deg == 1:
+        # STAR PATTERN: Multiple inflows → single outflow (classic mule aggregator)
+        if in_deg >= 5 and out_deg == 1:
+            score += 45
+            reasons.append(f"Strong star aggregator pattern ({in_deg} inflows → 1 outflow)")
+        elif in_deg >= 3 and out_deg == 1:
             score += 30
-            reasons.append("Star-pattern mule behavior")
+            reasons.append(f"Star-pattern mule behavior ({in_deg} inflows → 1 outflow)")
+        elif in_deg >= 2 and out_deg == 1:
+            score += 15
+            reasons.append(f"Possible aggregator ({in_deg} inflows → 1 outflow)")
 
-        # Chain pattern (BFS, bounded)
+        # REVERSE STAR: Single inflow → multiple outflows (classic money distributor)
+        if out_deg >= 5 and in_deg == 1:
+            score += 45
+            reasons.append(f"Strong money distributor pattern (1 inflow → {out_deg} outflows)")
+        elif out_deg >= 3 and in_deg == 1:
+            score += 30
+            reasons.append(f"Distributor pattern (1 inflow → {out_deg} outflows)")
+
+        # BALANCED FLOW: Both high in/out degrees (relay node in processing network)
+        if in_deg >= 3 and out_deg >= 3 and in_deg >= 2 * out_deg:
+            score += 35
+            reasons.append(f"Relay/processing node ({in_deg} inflows → {out_deg} outflows)")
+
+        # CHAIN PATTERN: Account part of money laundering chain
         if out_deg > 0 and _has_chain(G, account):
-            score += 25
-            reasons.append("Chain money laundering pattern")
+            # Check chain depth
+            if _has_chain(G, account, min_len=6, max_depth=8):
+                score += 35
+                reasons.append("Deep money laundering chain detected (4+ hops)")
+            elif _has_chain(G, account, min_len=5, max_depth=7):
+                score += 30
+                reasons.append("Extended laundering chain (3+ hops)")
+            else:
+                score += 20
+                reasons.append("Part of money laundering chain")
 
-        # Circular pattern
+        # CIRCULAR PATTERN: Account in mule network loop
         if account in cycle_members:
             score += 50
-            reasons.append("Circular mule network detected")
+            reasons.append("Part of circular mule network (fund rotation)")
 
-        results[account] = (min(score, 100), reasons)
+        results[account] = (min(int(score), 100), reasons)
 
     return results
 

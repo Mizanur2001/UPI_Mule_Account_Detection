@@ -2,7 +2,7 @@ from backend.utils.data_loader import *
 from backend.core.behavioral import behavioral_risk
 from backend.core.graph_analysis import build_transaction_graph, graph_risk, batch_graph_risk
 from backend.core.device_risk import device_risk
-from backend.core.risk_engine import aggregate_risk, risk_level
+from backend.core.risk_engine import aggregate_risk, risk_level, get_risk_confidence
 
 def score_account(account_id, txns=None, accounts=None, devices=None, G=None, cycles=None, _graph_cache=None):
     if txns is None:
@@ -37,11 +37,17 @@ def score_account(account_id, txns=None, accounts=None, devices=None, G=None, cy
     device_score, d_reasons = device_risk(account_id, devices)
 
     final_score = aggregate_risk(behavioral_score, graph_score, device_score)
+    risk_lvl = risk_level(final_score)
+    confidence = get_risk_confidence(final_score)
 
     return {
         "account_id": account_id,
         "risk_score": final_score,
-        "risk_level": risk_level(final_score),
+        "risk_level": risk_lvl,
+        "confidence": confidence,
+        "behavioral_score": int(behavioral_score),
+        "graph_score": int(graph_score),
+        "device_score": int(device_score),
         "reasons": b_reasons + g_reasons + d_reasons
     }
 
