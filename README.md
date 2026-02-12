@@ -3,38 +3,46 @@
 > **Cyber Security Innovation Challenge (CSIC) 1.0 – Stage III**  
 > Problem: *Mule Accounts & Collusive Fraud in UPI*
 
-This is a **production-ready MVP** for detecting mule accounts using behavioral analysis, graph pattern detection, and device correlation.
+A **production-ready MVP** for detecting mule accounts using a 5-factor risk model: behavioral analysis, graph pattern detection, device correlation, temporal anomaly detection, and ML-based anomaly scoring.
 
 ---
 
 ## 🎯 Key Features
 
-✅ **Multi-Signal Detection**
-- Behavioral analysis (velocity, pass-through ratios, new accounts)
-- Graph-based patterns (stars, distributors, chains, circular networks)
-- Device correlation (concentration, multi-device control)
+✅ **5-Signal Detection Engine**
+- Behavioral analysis (velocity, pass-through ratios, new accounts, volume spikes)
+- Graph-based patterns (stars, distributors, chains, circular networks, relay nodes)
+- Device correlation (concentration scoring, multi-device control)
+- Temporal analysis (burst detection, odd-hour activity, velocity spikes, bot-like uniform timing)
+- ML anomaly detection (Isolation Forest + Z-score ensemble, zero labeled data needed)
 
-✅ **Enterprise Dashboard**
-- 5 professional tabs with filters & sorting
-- Interactive network visualization
-- Detailed account drill-down
-- CSV export & markdown reports
+✅ **Enterprise Dashboard (8 Tabs)**
+- Command Center with real-time metrics
+- Risk Analysis with filters, sorting & forensic drill-down
+- ML Insights visualization
+- Interactive network graph with risk overlay
+- Transaction timeline analysis
+- Alert management console
+- Real-time API testing interface
+- About / How It Works documentation
 
 ✅ **Explainable Results**
 - 3-5 specific evidence items per account
 - Confidence levels (VERY HIGH, HIGH, MODERATE, LOW, MINIMAL)
-- Component breakdown (behavioral + graph + device)
+- Recommended actions per risk level (BLOCK / INVESTIGATE / MONITOR / ALLOW)
+- Component breakdown (behavioral + graph + device + temporal + ML)
 
 ✅ **Production Architecture**
-- FastAPI backend (< 500ms scoring for 50+ accounts)
-- Batch processing with caching
+- FastAPI v2.0.0 backend with CORS support
+- Batch processing with graph & ML caching
+- Lightweight Isolation Forest (pure NumPy, no scikit-learn dependency)
 - Efficient graph algorithms (O(V·depth) instead of exponential)
-- Real-time ready
+- Transaction simulation endpoint for real-time decisioning
 
 ✅ **Validated Test Scenarios**
-- 5 known mule account patterns (all detected as HIGH risk)
+- 5 known mule account patterns (all detected as HIGH/CRITICAL risk)
 - 25+ legitimate background accounts
-- Realistic transaction flows
+- Realistic transaction flows with timestamps
 
 ---
 
@@ -56,7 +64,7 @@ python scripts/enhanced_data_generator.py
 
 ### 3. Run Dashboard
 ```bash
-python -m streamlit run dashboard/dashboard_optimized.py
+python -m streamlit run dashboard/dashboard.py
 ```
 
 Opens at: **http://localhost:8501**
@@ -67,44 +75,70 @@ Opens at: **http://localhost:8501**
 
 | Tab | Purpose |
 |-----|---------|
-| **📊 Summary** | Overview metrics, risk distribution, component analysis |
+| **📊 Command Center** | Overview metrics, risk distribution, component analysis |
 | **🎯 Risk Analysis** | Filter, sort, drill-down into individual accounts with evidence |
-| **🕸️ Network** | Interactive transaction graph with risk-based coloring |
-| **📋 Report** | Auto-generated investigation report, export to markdown |
-| **ℹ️ How It Works** | Algorithm explanation, scoring formula, examples |
+| **🧠 ML Insights** | Isolation Forest & Z-score anomaly visualization |
+| **🕸️ Network Graph** | Interactive transaction graph with risk-based coloring |
+| **⏱️ Timeline** | Temporal analysis of transaction patterns |
+| **🚨 Alerts** | Alert management console for flagged accounts |
+| **⚡ Real-Time API** | Live API testing and transaction simulation |
+| **📖 About** | Algorithm explanation, scoring formula, architecture |
 
 ---
 
 ## 🔍 Detection Algorithm
 
-### Three Independent Risk Signals
+### Five Independent Risk Signals
 
-**Behavioral (30%)**
-- Velocity spikes (5-10+ transactions)
-- New account rapid activity (0-7 days = +40 pts)
+**Behavioral (25%)**
+- Velocity spikes (5-10+ transactions: +25-35 pts)
+- New account rapid activity (0-7 days = +40 pts, 0-30 days = +30 pts)
 - Pass-through ratio (80-120% inflow→outflow = +35 pts)
-- Amount anomalies (avg > ₹5K)
+- Amount anomalies (avg > ₹5K = +20 pts, max > ₹10K = +15 pts)
+- Total volume spike (> ₹50K = +20 pts)
+- Pure sender pattern (no receiving txns = +20 pts)
 
-**Graph Analysis (50%)** [HIGHEST PRIORITY]
+**Graph Analysis (40%)** [STRONGEST SIGNAL]
 - Star patterns: 3-5+ inflows → 1 outflow (+30-45 pts)
 - Distributors: 1 inflow → 3-5+ outflows (+30-45 pts)
+- Relay nodes: High in/out degree processing (+35 pts)
 - Chains: Linear laundering paths A→B→C→D (+20-35 pts)
 - Circular: Fund rotation loops A→B→C→A (+50 pts)
 
-**Device (20%)**
-- Device on 3-10+ accounts (+30-50 pts)
-- Multi-device control (+20-30 pts)
+**Device (15%)**
+- Device shared across 3-10+ accounts (+30-50 pts)
+- Multi-device control / spoofing (+20-30 pts)
+
+**Temporal (10%)**
+- Rapid-fire bursts (< 60s between txns = +35 pts)
+- Odd-hour activity (12AM-5AM concentration = +15-30 pts)
+- Velocity spikes (3x+ rate increase = +25 pts)
+- Weekend concentration (> 70% on weekends = +15 pts)
+- Uniform timing / bot signature (low CV = +20-30 pts)
+
+**ML Anomaly (10%)**
+- Isolation Forest (unsupervised, pure NumPy implementation)
+- Z-score statistical outlier detection
+- Ensemble: 70% IF + 30% Z-score
+- Labels: ANOMALOUS (70+), SUSPICIOUS (45-69), NORMAL (<45)
 
 ### Final Score
 ```
-Base = (0.30 × Behavioral) + (0.50 × Graph) + (0.20 × Device)
-Score = Base + Confidence Boost (0-15 pts if signals align)
+Base = (0.25 × Behavioral) + (0.40 × Graph) + (0.15 × Device)
+     + (0.10 × Temporal) + (0.10 × ML Anomaly)
+
+Boost: +8 (2 signals) / +15 (3 signals) / +20 (4+ signals)
+       +10 (graph & device correlated) / +8 (behavioral & graph)
+       +12 (extreme triple correlation)
+
+Score = min(Base + Boost, 100)
 ```
 
 ### Risk Levels
-- **HIGH (70+):** Immediate investigation
-- **MEDIUM (40-69):** Enhanced monitoring
-- **LOW (<40):** Routine monitoring
+- **CRITICAL (85+):** Block immediately — freeze account, alert compliance, file SAR
+- **HIGH (70-84):** Investigate — manual review within 24h, enhanced monitoring
+- **MEDIUM (40-69):** Monitor — add to watchlist, periodic review
+- **LOW (<40):** Allow — normal operations, routine monitoring
 
 ---
 
@@ -112,40 +146,57 @@ Score = Base + Confidence Boost (0-15 pts if signals align)
 
 Your test data includes these known mule accounts:
 
-| Account | Pattern | Expected Score |
-|---------|---------|-----------------|
-| `mule_aggregator@upi` | Star aggregator (5→1) | HIGH (95+) |
-| `circle_node_*@upi` | Circular loop (A→B→C→D→A) | HIGH (100) |
-| `chain_node_*@upi` | Laundering chain | MEDIUM-HIGH (50-70) |
-| `device_ring_*@upi` | Same device on 3 accounts | HIGH (70+) |
-| `new_mule_account@upi` | 1-day-old + 8 rapid txns | HIGH (80+) |
+| Account | Pattern | Expected Risk |
+|---------|---------|---------------|
+| `mule_aggregator@upi` | Star aggregator (5→1), burst timing | CRITICAL/HIGH |
+| `circle_node_*@upi` | Circular loop (A→B→C→D→A) | CRITICAL/HIGH |
+| `chain_node_*@upi` | Laundering chain | MEDIUM-HIGH |
+| `device_ring_*@upi` | Same device on 3 accounts | HIGH |
+| `new_mule_account@upi` | 1-day-old + rapid burst txns | HIGH |
 
 ---
 
 ## 📁 Project Structure
 
 ```
-UPI_Mule_Account_Detection/
+MVP/
 ├── backend/
-│   ├── app.py                    # FastAPI app
-│   ├── api/score.py              # Scoring endpoint
-│   └── core/
-│       ├── behavioral.py         # Velocity + new account detection
-│       ├── graph_analysis.py     # Network patterns
-│       ├── device_risk.py        # Device correlation
-│       └── risk_engine.py        # Score aggregation
+│   ├── app.py                       # FastAPI v2.0.0 app (6 endpoints)
+│   ├── api/
+│   │   └── score.py                 # Single & batch scoring logic
+│   ├── core/
+│   │   ├── behavioral.py            # Velocity, pass-through, new-account detection
+│   │   ├── graph_analysis.py        # Network patterns (star, chain, circular, relay)
+│   │   ├── device_risk.py           # Device concentration & multi-device scoring
+│   │   ├── temporal_analysis.py     # Time-based anomaly detection (bursts, bots)
+│   │   ├── ml_anomaly.py            # Isolation Forest + Z-score ensemble
+│   │   └── risk_engine.py           # 5-factor aggregation & confidence boost
+│   └── utils/
+│       ├── data_loader.py           # CSV data loaders
+│       └── helpers.py               # Timestamp utilities
 ├── dashboard/
-│   └── dashboard_optimized.py    # 5-tab Streamlit app
+│   └── dashboard.py                 # 8-tab Streamlit app
 ├── data/
-│   ├── transactions.csv          # Simulated UPI data
-│   ├── accounts.csv
-│   └── devices.csv
+│   ├── transactions.csv             # Simulated UPI transactions with timestamps
+│   ├── accounts.csv                 # Account metadata (age, type)
+│   └── devices.csv                  # Device-account mappings
 ├── scripts/
-│   └── enhanced_data_generator.py # Mule scenario creator
-├── DEPLOYMENT_GUIDE.md           # Complete setup guide
-├── STAGE_III_SUMMARY.md          # What's been implemented
-├── requirements.txt
-└── README.md (this file)
+│   ├── data_generator.py            # Basic data generator
+│   └── enhanced_data_generator.py   # 5-scenario mule data generator
+├── lib/
+│   ├── bindings/utils.js            # UI binding utilities
+│   ├── tom-select/                  # Tom Select JS library
+│   └── vis-9.1.2/                   # Vis.js network visualization
+├── docs/
+│   └── demo_flow.md                 # Demo walkthrough for judges
+├── test_backend.py                  # Backend scoring tests
+├── test_system.py                   # System integration tests
+├── DEPLOYMENT_GUIDE.md              # Complete setup guide
+├── STAGE_III_SUMMARY.md             # Implementation summary
+├── IMPROVEMENT_IDEAS.md             # Future enhancements
+├── MVP_COMPLETION_SUMMARY.txt       # Completion checklist
+├── requirements.txt                 # Python dependencies
+└── README.md                        # This file
 ```
 
 ---
@@ -157,7 +208,19 @@ Start server:
 python -m uvicorn backend.app:app --reload
 ```
 
-Score endpoint:
+### Endpoints
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/` | Service info & available endpoints |
+| GET | `/health` | Health check with data statistics |
+| GET | `/score/{account_id}` | Score a single account |
+| POST | `/batch_score` | Score multiple accounts in one call |
+| GET | `/stats` | System-wide risk distribution |
+| POST | `/simulate` | Simulate a transaction & get risk decision |
+
+### Example: Score Endpoint
+
 ```
 GET http://127.0.0.1:8000/score/{account_id}
 ```
@@ -167,37 +230,61 @@ Response:
 {
   "account_id": "mule_aggregator@upi",
   "risk_score": 95,
-  "risk_level": "HIGH",
+  "risk_level": "CRITICAL",
   "confidence": "VERY HIGH",
+  "recommended_action": "BLOCK IMMEDIATELY - Freeze account, alert compliance, file SAR",
   "behavioral_score": 100,
   "graph_score": 85,
   "device_score": 60,
+  "temporal_score": 35,
+  "ml_anomaly_score": 72.5,
+  "ml_anomaly_label": "ANOMALOUS",
+  "signal_count": 4,
   "reasons": [
     "Star-pattern mule behavior (5 inflows → 1 outflow)",
     "Mule indicator: 95% of inflow sent back out",
-    "High transaction velocity (10 txns)"
-  ]
+    "High transaction velocity (10 txns)",
+    "Rapid-fire burst: 4 transactions within 60 seconds (bot-like)"
+  ],
+  "response_time_ms": 45.2,
+  "timestamp": "2026-02-12T10:30:00"
 }
 ```
 
----
+### Example: Simulate Transaction
 
-## 🧪 Testing Without Dashboard
-
-```bash
-python test_backend.py
+```
+POST http://127.0.0.1:8000/simulate
+Body: {"sender": "user_1@upi", "receiver": "mule_aggregator@upi", "amount": 5000}
 ```
 
-Output shows all HIGH risk accounts detected with evidence.
+Returns risk assessment for both parties with a decision: **BLOCK**, **FLAG**, or **ALLOW**.
+
+API docs available at: **http://127.0.0.1:8000/docs** (Swagger UI) and **/redoc** (ReDoc).
+
+---
+
+## 🧪 Testing
+
+```bash
+# Backend unit tests
+python test_backend.py
+
+# System integration tests
+python test_system.py
+```
+
+Output shows all CRITICAL/HIGH risk accounts detected with evidence and signal counts.
 
 ---
 
 ## 📈 Performance
 
 - **Full analysis:** < 2 seconds for 50+ accounts
-- **Batch scoring:** One-pass graph cycle detection
-- **Memory:** Efficient O(n) storage, O(V·depth) algorithms
-- **Scalability:** Tested architecture scales linearly
+- **Batch scoring:** One-pass graph cycle detection + batch ML inference
+- **ML inference:** Lightweight Isolation Forest (pure NumPy, no sklearn needed)
+- **Memory:** Efficient O(n) storage, O(V·depth) graph algorithms
+- **Scalability:** Architecture scales linearly with account count
 
 ---
 
@@ -207,9 +294,11 @@ Output shows all HIGH risk accounts detected with evidence.
 Edit `backend/core/risk_engine.py`:
 ```python
 def risk_level(score):
-    if score >= 70:      # Change HIGH threshold
+    if score >= 85:      # CRITICAL threshold
+        return "CRITICAL"
+    elif score >= 70:    # HIGH threshold
         return "HIGH"
-    elif score >= 40:    # Change MEDIUM threshold
+    elif score >= 40:    # MEDIUM threshold
         return "MEDIUM"
     return "LOW"
 ```
@@ -218,10 +307,23 @@ def risk_level(score):
 Edit `backend/core/risk_engine.py`:
 ```python
 base_score = (
-    0.30 * behavioral,   # Adjust weights
-    0.50 * graph,
-    0.20 * device
+    0.25 * behavioral   # Adjust weights (must sum to 1.0)
+    + 0.40 * graph
+    + 0.15 * device
+    + 0.10 * temporal
+    + 0.10 * ml_anomaly
 )
+```
+
+### Tune ML Anomaly Detection
+Edit `backend/core/ml_anomaly.py`:
+```python
+iforest = IsolationForestLite(
+    n_trees=100,        # More trees = more stable (slower)
+    max_samples=256,    # Subsample size per tree
+)
+# Ensemble weighting
+ensemble_scores = 0.7 * anomaly_scores + 0.3 * z_normalized
 ```
 
 ### Add Custom Mule Scenarios
@@ -233,6 +335,7 @@ Edit `scripts/enhanced_data_generator.py` and add your pattern.
 
 - **[DEPLOYMENT_GUIDE.md](DEPLOYMENT_GUIDE.md)** – Setup, usage, troubleshooting, customization
 - **[STAGE_III_SUMMARY.md](STAGE_III_SUMMARY.md)** – What's been implemented, improvements vs. original
+- **[IMPROVEMENT_IDEAS.md](IMPROVEMENT_IDEAS.md)** – Future enhancement roadmap
 - **[docs/demo_flow.md](docs/demo_flow.md)** – Demo walkthrough for judges
 
 ---
@@ -241,29 +344,36 @@ Edit `scripts/enhanced_data_generator.py` and add your pattern.
 
 | Feature | Previous | Current |
 |---------|----------|---------|
-| Behavioral Detection | Basic velocity | Pass-through ratio + new account + amounts |
-| Graph Algorithms | Exponential cycles | O(V·depth) DFS |
-| Device Detection | Simple count | Concentration scoring |
-| Risk Scoring | 2 components | 3 with confidence boost |
-| Explainability | 1-2 reasons | 3-5 detailed evidence items |
-| Dashboard | Single table | 5 professional tabs |
+| Detection Signals | 3 components | 5-factor model (+ temporal + ML) |
+| Behavioral Detection | Basic velocity | Pass-through ratio + new account + amounts + volume |
+| Graph Algorithms | Exponential cycles | O(V·depth) DFS with relay node detection |
+| Device Detection | Simple count | Concentration scoring with multi-device analysis |
+| Temporal Analysis | None | Burst, odd-hour, velocity spike, bot-signature detection |
+| ML Detection | None | Isolation Forest + Z-score ensemble (zero labels) |
+| Risk Levels | 3 (H/M/L) | 4 (CRITICAL/HIGH/MEDIUM/LOW) with recommended actions |
+| Risk Scoring | 3 weighted signals | 5-factor with multi-signal confidence boosting |
+| Explainability | 1-2 reasons | 3-5 detailed evidence items with signal counts |
+| Dashboard | 5 tabs | 8 professional tabs (ML, Timeline, Alerts, API) |
+| API | 2 endpoints | 6 endpoints (health, stats, simulate, batch) |
 | Exports | None | CSV + Markdown reports |
-| Test Data | Generic | 5 realistic mule scenarios |
+| Test Data | Generic | 5 realistic mule scenarios with timestamps |
 
 ---
 
 ## 🎯 What Works
 
-✅ Circular mule network detection (100/100 score)  
-✅ Star aggregator pattern (95+/100)  
-✅ Chain laundering paths (50-70 detection)  
-✅ New account rapid onboarding (80+/100)  
-✅ Device-based fraud rings (70+/100)  
-✅ Filter & sort by any criteria  
-✅ Export for further investigation  
+✅ Circular mule network detection (CRITICAL risk)  
+✅ Star aggregator pattern (CRITICAL/HIGH risk)  
+✅ Chain laundering paths (MEDIUM-HIGH detection)  
+✅ New account rapid onboarding (HIGH risk)  
+✅ Device-based fraud rings (HIGH risk)  
+✅ Temporal burst & bot detection  
+✅ ML-based unsupervised anomaly flagging  
+✅ Real-time transaction simulation with BLOCK/FLAG/ALLOW  
 ✅ Interactive network visualization  
-✅ Detailed account drill-down  
-✅ Auto-generated reports  
+✅ Detailed forensic drill-down  
+✅ Alert management console  
+✅ Auto-generated investigation reports  
 
 ---
 
@@ -272,7 +382,7 @@ Edit `scripts/enhanced_data_generator.py` and add your pattern.
 - Test data is synthetic (use real data for production)
 - Detection optimized for simplified transaction formats
 - Graph algorithm capped at 6-hop cycle detection (configurable)
-- No time-series analysis yet
+- ML model retrained per batch (no persistent model storage yet)
 - Single-threaded (can add async for scaling)
 
 ---
@@ -281,22 +391,24 @@ Edit `scripts/enhanced_data_generator.py` and add your pattern.
 
 **For demo/questions:**
 1. Run `python test_backend.py` to verify detection works
-2. Check Tab 5 in dashboard for algorithm explanation
-3. Review account evidence in Tab 2 for debugging
-4. Read DEPLOYMENT_GUIDE.md for troubleshooting
+2. Check the **About** tab in dashboard for algorithm explanation
+3. Review account evidence in **Risk Analysis** tab for debugging
+4. Use **Real-Time API** tab to test live scoring
+5. Read DEPLOYMENT_GUIDE.md for troubleshooting
 
 ---
 
 ## 📜 License & Credits
 
 - Part of CSIC 1.0 Stage III Challenge
-- Built with: FastAPI, Streamlit, Pandas, NetworkX, PyVis
-- Data generation: Enhanced synthetic scenarios
-- Detection: Multi-signal hybrid approach
+- Built with: FastAPI, Streamlit, Pandas, NetworkX, NumPy, Plotly, PyVis
+- ML Engine: Custom Isolation Forest (pure NumPy) + Z-score ensemble
+- Data generation: Enhanced synthetic scenarios with 5 fraud typologies
+- Detection: 5-signal hybrid approach with confidence boosting
 
 ---
 
 **Status:** ✅ Stage III MVP Complete & Ready for Deployment
 
-**How to Run:** `python -m streamlit run dashboard/dashboard_optimized.py`
+**How to Run:** `python -m streamlit run dashboard/dashboard.py`
 

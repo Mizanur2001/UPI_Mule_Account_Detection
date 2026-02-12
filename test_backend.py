@@ -38,13 +38,15 @@ try:
     print(f"   ✅ Scored {len(scores)} accounts")
     
     print("\n5. analyzing results by risk level...")
-    risk_counts = {"HIGH": 0, "MEDIUM": 0, "LOW": 0}
+    risk_counts = {"CRITICAL": 0, "HIGH": 0, "MEDIUM": 0, "LOW": 0}
     for acc, result in scores.items():
-        risk_counts[result["risk_level"]] += 1
+        lvl = result["risk_level"]
+        risk_counts[lvl] = risk_counts.get(lvl, 0) + 1
     
-    print(f"   ✅ HIGH RISK: {risk_counts['HIGH']}")
-    print(f"   ✅ MEDIUM RISK: {risk_counts['MEDIUM']}")
-    print(f"   ✅ LOW RISK: {risk_counts['LOW']}")
+    print(f"   \u2705 CRITICAL RISK: {risk_counts.get('CRITICAL', 0)}")
+    print(f"   \u2705 HIGH RISK: {risk_counts.get('HIGH', 0)}")
+    print(f"   \u2705 MEDIUM RISK: {risk_counts.get('MEDIUM', 0)}")
+    print(f"   \u2705 LOW RISK: {risk_counts.get('LOW', 0)}")
     
     print("\n6. Displaying HIGH RISK accounts (targets for mule detection)...")
     high_risk = sorted(
