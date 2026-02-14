@@ -1,15 +1,31 @@
-def device_risk(account, device_df):
+"""
+Device-based fraud risk analysis for UPI accounts.
+Detects suspicious device sharing patterns across multiple accounts.
+"""
+
+from typing import Tuple, List
+import pandas as pd
+
+
+def device_risk(account: str, device_df: pd.DataFrame) -> Tuple[float, List[str]]:
     """
-    Detects device-based fraud: same device controlling multiple accounts
+    Detects device-based fraud: same device controlling multiple accounts.
+    
+    Args:
+        account: Account ID to analyze
+        device_df: DataFrame mapping accounts to devices
+        
+    Returns:
+        Tuple of (risk_score: 0-100, reasons: list of explanation strings)
     """
-    score = 0
-    reasons = []
+    score: float = 0.0
+    reasons: List[str] = []
 
     # Get all devices linked to this account
     linked_accounts = device_df[device_df["account_id"] == account]
     
     if len(linked_accounts) == 0:
-        return 0, ["No device data available"]
+        return 0.0, ["No device data available"]
 
     device_ids = linked_accounts["device_id"].unique().tolist()
     

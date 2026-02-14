@@ -1,17 +1,33 @@
-def behavioral_risk(account_txns, account_meta):
+"""
+Behavioral risk analysis for UPI accounts.
+Detects anomalies in transaction velocity, flow patterns, and amounts.
+"""
+
+from typing import Tuple, List
+import pandas as pd
+
+
+def behavioral_risk(account_txns: pd.DataFrame, account_meta: pd.Series) -> Tuple[float, List[str]]:
     """
-    Detects velocity & temporal anomalies with detailed metrics
+    Detects velocity & temporal anomalies with detailed metrics.
+    
+    Args:
+        account_txns: DataFrame of transactions for this account
+        account_meta: Series with account metadata (account_age_days, etc.)
+        
+    Returns:
+        Tuple of (risk_score: 0-100, reasons: list of explanation strings)
     """
-    score = 0
-    reasons = []
+    score: float = 0.0
+    reasons: List[str] = []
     
     if len(account_txns) == 0:
-        return 0, []
+        return 0.0, []
 
     txn_count = len(account_txns)
-    avg_amount = account_txns["amount"].mean() if txn_count else 0
-    max_amount = account_txns["amount"].max() if txn_count else 0
-    total_volume = account_txns["amount"].sum() if txn_count else 0
+    avg_amount = account_txns["amount"].mean() if txn_count else 0.0
+    max_amount = account_txns["amount"].max() if txn_count else 0.0
+    total_volume = account_txns["amount"].sum() if txn_count else 0.0
     
     # Extract sender and receiver transactions
     sent_txns = account_txns[account_txns["sender"] == account_meta["account_id"]]
@@ -22,11 +38,14 @@ def behavioral_risk(account_txns, account_meta):
 
     # VELOCITY DETECTION
     if txn_count >= 10:
-        score += 35
+        score += 25
         reasons.append(f"Very high transaction velocity ({txn_count} txns)")
     elif txn_count >= 5:
-        score += 25
+        score += 15
         reasons.append(f"High transaction velocity ({txn_count} txns)")
+    elif txn_count >= 3:
+        score += 8
+        reasons.append(f"Moderate transaction velocity ({txn_count} txns)")
 
     # ASYMMETRIC FLOW (Classic mule indicator: sends out most of what comes in)
     if recv_count >= 3 and sent_count >= 3:
@@ -35,18 +54,27 @@ def behavioral_risk(account_txns, account_meta):
         if inflow > 0:
             pass_through_ratio = outflow / inflow
             if 0.8 <= pass_through_ratio <= 1.2:  # 80-120% pass-through
-                score += 35
-                reasons.append(f"Mule indicator: {pass_through_ratio:.1%} of inflow sent back out")
+                score += 45
+                reasons.append(f"STRONG MULE PATTERN: {pass_through_ratio:.1%} pass-through ratio (inflow→outflow)")
+            elif 0.5 <= pass_through_ratio <= 1.5 and inflow > 1000:
+                score += 30
+                reasons.append(f"Mule pattern: {pass_through_ratio:.1%} pass-through with high inflow")
             elif pass_through_ratio > 1.2:  # Sends more than received
                 score += 20
                 reasons.append(f"Outflow exceeds inflow (pass-through ratio: {pass_through_ratio:.1%})")
 
     # AMOUNT ANOMALIES
+    if max_amount > 10000:
+        score += 25
+        reasons.append(f"Very large single transaction (₹{max_amount:,.0f})")
+    elif max_amount > 8000:
+        score += 15
+        reasons.append(f"Large transaction detected (₹{max_amount:,.0f})")
     if avg_amount > 5000:
-        score += 20
+        score += 12
         reasons.append(f"High average transaction amount (₹{avg_amount:,.0f})")
     elif avg_amount > 3000:
-        score += 10
+        score += 6
         reasons.append(f"Moderate transaction amount (₹{avg_amount:,.0f})")
     
     if max_amount > 10000:

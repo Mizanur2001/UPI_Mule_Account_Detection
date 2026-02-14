@@ -7,6 +7,7 @@ This is a key innovation: works on zero labeled fraud data, making it
 deployable from day-one in any UPI ecosystem.
 """
 
+from typing import Dict, List, Tuple, Any
 import numpy as np
 import pandas as pd
 from collections import defaultdict
@@ -21,14 +22,33 @@ class IsolationForestLite:
     earlier in random binary trees. Normal points require more splits.
     """
 
-    def __init__(self, n_trees: int = 100, max_samples: int = 256, random_state: int = 42):
+    def __init__(
+        self,
+        n_trees: int = 100,
+        max_samples: int = 256,
+        random_state: int = 42
+    ) -> None:
+        """
+        Initialize Isolation Forest.
+        
+        Args:
+            n_trees: Number of trees to build
+            max_samples: Maximum samples per tree
+            random_state: Random seed for reproducibility
+        """
         self.n_trees = n_trees
         self.max_samples = max_samples
         self.rng = np.random.RandomState(random_state)
-        self.trees = []
+        self.trees: List[Dict[str, Any]] = []
         self._fitted = False
 
-    def _build_tree(self, X: np.ndarray, depth: int = 0, max_depth: int = 10):
+    def _build_tree(
+        self,
+        X: np.ndarray,
+        depth: int = 0,
+        max_depth: int = 10
+    ) -> Dict[str, Any]:
+        """Build a single isolation tree recursively."""
         n_samples, n_features = X.shape
         if n_samples <= 1 or depth >= max_depth:
             return {"type": "leaf", "size": n_samples}
@@ -51,14 +71,18 @@ class IsolationForestLite:
             "right": self._build_tree(X[right_mask], depth + 1, max_depth),
         }
 
-    def fit(self, X: np.ndarray):
+    def fit(self, X: np.ndarray) -> "IsolationForestLite":
         """Fit the isolation forest on feature matrix X."""
         n = min(len(X), self.max_samples)
         max_depth = int(np.ceil(np.log2(max(n, 2))))
 
         self.trees = []
         for _ in range(self.n_trees):
-            indices = self.rng.choice(len(X), size=n, replace=False) if len(X) > n else np.arange(len(X))
+            indices = (
+                self.rng.choice(len(X), size=n, replace=False)
+                if len(X) > n
+                else np.arange(len(X))
+            )
             tree = self._build_tree(X[indices], max_depth=max_depth)
             self.trees.append(tree)
 
@@ -66,7 +90,8 @@ class IsolationForestLite:
         self._fitted = True
         return self
 
-    def _path_length(self, x: np.ndarray, tree: dict, depth: int = 0) -> float:
+    def _path_length(self, x: np.ndarray, tree: Dict[str, Any], depth: int = 0) -> float:
+        """Compute path length for a single sample."""
         if tree["type"] == "leaf":
             return depth + self._c(tree["size"])
         if x[tree["feature"]] < tree["split"]:
@@ -77,12 +102,18 @@ class IsolationForestLite:
     def _c(n: int) -> float:
         """Average path length of unsuccessful search in BST."""
         if n <= 1:
-            return 0
+            return 0.0
         return 2.0 * (np.log(n - 1) + 0.5772156649) - 2.0 * (n - 1) / n
 
     def anomaly_score(self, X: np.ndarray) -> np.ndarray:
         """
         Compute anomaly scores. Higher = more anomalous (0 to 1 scale).
+        
+        Args:
+            X: Feature matrix
+            
+        Returns:
+            Array of anomaly scores
         """
         if not self._fitted:
             raise RuntimeError("Must call fit() first")
@@ -97,11 +128,24 @@ class IsolationForestLite:
         return scores
 
 
-def extract_account_features(account_id: str, txns: pd.DataFrame,
-                              accounts: pd.DataFrame, devices: pd.DataFrame) -> dict:
+def extract_account_features(
+    account_id: str,
+    txns: pd.DataFrame,
+    accounts: pd.DataFrame,
+    devices: pd.DataFrame
+) -> Dict[str, float]:
     """
     Extract feature vector for one account from transaction data.
     Features designed to capture mule-like behavioral signatures.
+    
+    Args:
+        account_id: Account ID to extract features for
+        txns: Transactions DataFrame
+        accounts: Account metadata DataFrame
+        devices: Device information DataFrame
+        
+    Returns:
+        Dictionary mapping feature names to values
     """
     acc_txns = txns[(txns["sender"] == account_id) | (txns["receiver"] == account_id)]
     sent = txns[txns["sender"] == account_id]
@@ -111,11 +155,11 @@ def extract_account_features(account_id: str, txns: pd.DataFrame,
     total_sent = len(sent)
     total_recv = len(recv)
 
-    amount_sent = sent["amount"].sum() if total_sent > 0 else 0
-    amount_recv = recv["amount"].sum() if total_recv > 0 else 0
-    avg_amount = acc_txns["amount"].mean() if total_txns > 0 else 0
-    max_amount = acc_txns["amount"].max() if total_txns > 0 else 0
-    std_amount = acc_txns["amount"].std() if total_txns > 1 else 0
+    amount_sent = sent["amount"].sum() if total_sent > 0 else 0.0
+    amount_recv = recv["amount"].sum() if total_recv > 0 else 0.0
+    avg_amount = acc_txns["amount"].mean() if total_txns > 0 else 0.0
+    max_amount = acc_txns["amount"].max() if total_txns > 0 else 0.0
+    std_amount = acc_txns["amount"].std() if total_txns > 1 else 0.0
 
     # Unique counterparties
     unique_senders = recv["sender"].nunique() if total_recv > 0 else 0
@@ -125,7 +169,7 @@ def extract_account_features(account_id: str, txns: pd.DataFrame,
     if amount_recv > 0:
         pass_through = amount_sent / amount_recv
     else:
-        pass_through = 0 if amount_sent == 0 else 2.0
+        pass_through = 0.0 if amount_sent == 0 else 2.0
 
     # In/out degree ratio
     degree_ratio = unique_senders / max(unique_receivers, 1)
@@ -141,40 +185,54 @@ def extract_account_features(account_id: str, txns: pd.DataFrame,
     # Shared device accounts
     if len(acc_devices) > 0:
         device_ids = acc_devices["device_id"].unique()
-        shared_accounts = devices[devices["device_id"].isin(device_ids)]["account_id"].nunique() - 1
+        shared_accounts = (
+            devices[devices["device_id"].isin(device_ids)]["account_id"].nunique() - 1
+        )
     else:
         shared_accounts = 0
 
     return {
-        "total_txns": total_txns,
-        "total_sent": total_sent,
-        "total_recv": total_recv,
-        "amount_sent": amount_sent,
-        "amount_recv": amount_recv,
-        "avg_amount": avg_amount,
-        "max_amount": max_amount,
-        "std_amount": std_amount if not np.isnan(std_amount) else 0,
-        "unique_senders": unique_senders,
-        "unique_receivers": unique_receivers,
-        "pass_through_ratio": min(pass_through, 5.0),
-        "degree_ratio": min(degree_ratio, 10.0),
-        "age_days": age_days,
-        "n_devices": n_devices,
-        "shared_device_accounts": shared_accounts,
-        "txns_per_day": total_txns / max(age_days, 1),
-        "volume_per_day": (amount_sent + amount_recv) / max(age_days, 1),
+        "total_txns": float(total_txns),
+        "total_sent": float(total_sent),
+        "total_recv": float(total_recv),
+        "amount_sent": float(amount_sent),
+        "amount_recv": float(amount_recv),
+        "avg_amount": float(avg_amount),
+        "max_amount": float(max_amount),
+        "std_amount": float(std_amount) if not np.isnan(std_amount) else 0.0,
+        "unique_senders": float(unique_senders),
+        "unique_receivers": float(unique_receivers),
+        "pass_through_ratio": min(float(pass_through), 5.0),
+        "degree_ratio": min(float(degree_ratio), 10.0),
+        "age_days": float(age_days),
+        "n_devices": float(n_devices),
+        "shared_device_accounts": float(shared_accounts),
+        "txns_per_day": float(total_txns) / max(age_days, 1),
+        "volume_per_day": (float(amount_sent) + float(amount_recv)) / max(age_days, 1),
     }
 
 
-def ml_anomaly_detection(account_ids: list, txns: pd.DataFrame,
-                          accounts: pd.DataFrame, devices: pd.DataFrame) -> dict:
+def ml_anomaly_detection(
+    account_ids: List[str],
+    txns: pd.DataFrame,
+    accounts: pd.DataFrame,
+    devices: pd.DataFrame
+) -> Dict[str, Dict[str, Any]]:
     """
     Run ML-based anomaly detection across all accounts.
-    Returns dict {account_id: {"anomaly_score": float, "anomaly_label": str, "features": dict}}
+    
+    Args:
+        account_ids: List of account IDs to analyze
+        txns: Transactions DataFrame
+        accounts: Account metadata DataFrame
+        devices: Device information DataFrame
+        
+    Returns:
+        Dictionary mapping account_id to results with anomaly scores and labels
     """
     # Extract features for all accounts
-    feature_list = []
-    valid_ids = []
+    feature_list: List[Dict[str, float]] = []
+    valid_ids: List[str] = []
 
     for acc_id in account_ids:
         feats = extract_account_features(acc_id, txns, accounts, devices)
@@ -186,7 +244,10 @@ def ml_anomaly_detection(account_ids: list, txns: pd.DataFrame,
 
     # Build feature matrix
     feature_names = list(feature_list[0].keys())
-    X = np.array([[f[k] for k in feature_names] for f in feature_list], dtype=np.float64)
+    X = np.array(
+        [[f[k] for k in feature_names] for f in feature_list],
+        dtype=np.float64
+    )
 
     # Normalize features (min-max scaling)
     X_min = X.min(axis=0)
@@ -201,9 +262,14 @@ def ml_anomaly_detection(account_ids: list, txns: pd.DataFrame,
     anomaly_scores = iforest.anomaly_score(X_norm)
 
     # Also compute Z-score based outlier detection
-    z_scores = np.abs((X_norm - X_norm.mean(axis=0)) / (X_norm.std(axis=0) + 1e-10))
+    z_scores = np.abs(
+        (X_norm - X_norm.mean(axis=0)) / (X_norm.std(axis=0) + 1e-10)
+    )
     z_anomaly = z_scores.mean(axis=1)
-    z_normalized = (z_anomaly - z_anomaly.min()) / (z_anomaly.max() - z_anomaly.min() + 1e-10)
+    z_normalized = (
+        (z_anomaly - z_anomaly.min())
+        / (z_anomaly.max() - z_anomaly.min() + 1e-10)
+    )
 
     # Ensemble: combine isolation forest + z-score
     ensemble_scores = 0.7 * anomaly_scores + 0.3 * z_normalized
@@ -213,9 +279,9 @@ def ml_anomaly_detection(account_ids: list, txns: pd.DataFrame,
     if max_e > min_e:
         scaled_scores = ((ensemble_scores - min_e) / (max_e - min_e)) * 100
     else:
-        scaled_scores = np.full_like(ensemble_scores, 50)
+        scaled_scores = np.full_like(ensemble_scores, 50.0)
 
-    results = {}
+    results: Dict[str, Dict[str, Any]] = {}
     for i, acc_id in enumerate(valid_ids):
         score_val = float(scaled_scores[i])
         if score_val >= 70:
