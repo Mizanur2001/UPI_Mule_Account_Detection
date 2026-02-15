@@ -18,25 +18,25 @@ export const MetricCard: React.FC<MetricCardProps> = ({
   className 
 }) => {
   const riskColors = {
-    CRITICAL: 'border-critical bg-red-950',
-    HIGH: 'border-high bg-orange-950',
-    MEDIUM: 'border-medium bg-yellow-950',
-    LOW: 'border-low bg-green-950',
+    CRITICAL: 'dark:border-critical dark:bg-red-950 border-red-300 bg-red-50',
+    HIGH: 'dark:border-high dark:bg-orange-950 border-orange-300 bg-orange-50',
+    MEDIUM: 'dark:border-medium dark:bg-yellow-950 border-yellow-300 bg-yellow-50',
+    LOW: 'dark:border-low dark:bg-green-950 border-green-300 bg-green-50',
   };
 
-  const borderColor = riskLevel ? riskColors[riskLevel] : 'border-blue-600 bg-slate-800';
+  const borderColor = riskLevel ? riskColors[riskLevel] : 'dark:border-blue-600 dark:bg-slate-800 border-blue-300 bg-blue-50';
 
   return (
     <div
       className={clsx(
-        'bg-slate-900 border-l-4 rounded-lg p-4 text-white',
+        'border-l-4 rounded-lg p-4 dark:text-white text-slate-900',
         borderColor,
         className
       )}
     >
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-sm text-gray-300 mb-1">{label}</p>
+          <p className="text-sm dark:text-gray-300 text-gray-600 mb-1">{label}</p>
           <p className="text-2xl font-bold">{value}</p>
         </div>
         {icon && <div className="text-3xl opacity-50">{icon}</div>}
@@ -83,10 +83,10 @@ export const Button: React.FC<ButtonProps> = ({
   ...props
 }) => {
   const variantStyles = {
-    primary: 'bg-blue-600 hover:bg-blue-700 text-white',
-    secondary: 'bg-slate-700 hover:bg-slate-600 text-white',
-    danger: 'bg-critical hover:bg-red-700 text-white',
-    success: 'bg-low hover:bg-green-700 text-white',
+    primary: 'dark:bg-blue-600 dark:hover:bg-blue-700 dark:text-white bg-blue-500 hover:bg-blue-600 text-white',
+    secondary: 'dark:bg-slate-700 dark:hover:bg-slate-600 dark:text-white bg-slate-300 hover:bg-slate-400 text-slate-900',
+    danger: 'dark:bg-critical dark:hover:bg-red-700 dark:text-white bg-red-500 hover:bg-red-600 text-white',
+    success: 'dark:bg-low dark:hover:bg-green-700 dark:text-white bg-green-500 hover:bg-green-600 text-white',
   };
 
   const sizeStyles = {
@@ -128,8 +128,8 @@ export const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({
 
   return (
     <div className="flex flex-col items-center justify-center py-8">
-      <div className={clsx('border-4 border-slate-600 border-t-blue-500 rounded-full animate-spin', sizeClass[size])} />
-      {message && <p className="mt-4 text-gray-300">{message}</p>}
+      <div className={clsx('border-4 dark:border-slate-600 dark:border-t-blue-500 border-slate-300 border-t-blue-400 rounded-full animate-spin', sizeClass[size])} />
+      {message && <p className="mt-4 dark:text-gray-300 text-gray-600">{message}</p>}
     </div>
   );
 };
@@ -146,7 +146,7 @@ export const ErrorAlert: React.FC<ErrorAlertProps> = ({
   onDismiss 
 }) => {
   return (
-    <div className="bg-red-900 border border-red-700 rounded-lg p-4 mb-4 flex justify-between items-start">
+    <div className="dark:bg-red-900 dark:border-red-700 dark:text-white bg-red-100 border-red-300 border rounded-lg p-4 mb-4 flex justify-between items-start text-red-900">
       <div>
         <h3 className="text-red-200 font-semibold">{title}</h3>
         <p className="text-red-100 text-sm mt-1">{message}</p>

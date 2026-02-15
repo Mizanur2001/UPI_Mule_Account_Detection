@@ -21,9 +21,19 @@ export const CommandCenter: React.FC<CommandCenterProps> = ({
   loading,
   error,
 }) => {
+  console.log('[CommandCenter] Rendered with:', { scoresLength: scores.length, loading, hasError: !!error });
+  
   if (loading) return <LoadingSpinner message="Loading detection engine..." />;
   if (error) return <ErrorAlert title="Error Loading Data" message={error.message} />;
-  if (!scores.length) return <ErrorAlert title="No Data" message="No accounts to display" />;
+  
+  if (!scores.length) {
+    return (
+      <ErrorAlert 
+        title="No Risk Scores Available" 
+        message="Scores are loading... Please wait a moment and refresh the page if this persists." 
+      />
+    );
+  }
 
   const criticalCount = scores.filter((s) => s.risk_level === 'CRITICAL').length;
   const highCount = scores.filter((s) => s.risk_level === 'HIGH').length;
@@ -58,46 +68,46 @@ export const CommandCenter: React.FC<CommandCenterProps> = ({
         <MetricCard
           label="📈 AVG SCORE"
           value={avgScore.toFixed(0)}
-          className="border-blue-600 bg-blue-950"
+          className="dark:border-blue-600 dark:bg-blue-950 border-blue-300 bg-blue-50"
         />
       </div>
 
       {/* System Stats */}
       {stats && (
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <div className="bg-slate-800 rounded-lg p-4">
+          <div className="dark:bg-slate-800 dark:text-white bg-slate-100 text-slate-900 rounded-lg p-4">
             <div className="flex items-center gap-3">
-              <Database className="text-blue-400" size={24} />
+              <Database className="dark:text-blue-400 text-blue-600" size={24} />
               <div>
-                <p className="text-gray-400 text-sm">Total Accounts</p>
-                <p className="text-2xl font-bold text-white">{stats.total_accounts}</p>
+                <p className="dark:text-gray-400 text-gray-600 text-sm">Total Accounts</p>
+                <p className="text-2xl font-bold">{stats.total_accounts}</p>
               </div>
             </div>
           </div>
-          <div className="bg-slate-800 rounded-lg p-4">
+          <div className="dark:bg-slate-800 dark:text-white bg-slate-100 text-slate-900 rounded-lg p-4">
             <div className="flex items-center gap-3">
-              <Activity className="text-green-400" size={24} />
+              <Activity className="dark:text-green-400 text-green-600" size={24} />
               <div>
-                <p className="text-gray-400 text-sm">Transactions</p>
-                <p className="text-2xl font-bold text-white">{stats.total_transactions}</p>
+                <p className="dark:text-gray-400 text-gray-600 text-sm">Transactions</p>
+                <p className="text-2xl font-bold">{stats.total_transactions}</p>
               </div>
             </div>
           </div>
-          <div className="bg-slate-800 rounded-lg p-4">
+          <div className="dark:bg-slate-800 dark:text-white bg-slate-100 text-slate-900 rounded-lg p-4">
             <div className="flex items-center gap-3">
-              <AlertTriangle className="text-yellow-400" size={24} />
+              <AlertTriangle className="dark:text-yellow-400 text-yellow-600" size={24} />
               <div>
-                <p className="text-gray-400 text-sm">Devices</p>
-                <p className="text-2xl font-bold text-white">{stats.total_devices}</p>
+                <p className="dark:text-gray-400 text-gray-600 text-sm">Devices</p>
+                <p className="text-2xl font-bold">{stats.total_devices}</p>
               </div>
             </div>
           </div>
-          <div className="bg-slate-800 rounded-lg p-4">
+          <div className="dark:bg-slate-800 dark:text-white bg-slate-100 text-slate-900 rounded-lg p-4">
             <div className="flex items-center gap-3">
-              <Activity className="text-purple-400" size={24} />
+              <Activity className="dark:text-purple-400 text-purple-600" size={24} />
               <div>
-                <p className="text-gray-400 text-sm">Network</p>
-                <p className="text-lg font-bold text-white">{stats.network_nodes} nodes</p>
+                <p className="dark:text-gray-400 text-gray-600 text-sm">Network</p>
+                <p className="text-lg font-bold">{stats.network_nodes} nodes</p>
               </div>
             </div>
           </div>

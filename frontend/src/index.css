@@ -12,13 +12,20 @@ html {
   scroll-behavior: smooth;
 }
 
+/* Smooth theme transitions */
+html,
+body,
+body * {
+  @apply transition-colors duration-500;
+}
+
 body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
     'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  @apply bg-slate-900 text-white;
+  @apply bg-white text-slate-900 dark:bg-slate-900 dark:text-white;
 }
 
 /* Custom scrollbar */

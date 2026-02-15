@@ -4,6 +4,7 @@ export default {
     "./index.html",
     "./src/**/*.{js,ts,jsx,tsx}",
   ],
+  darkMode: 'class',
   theme: {
     extend: {
       colors: {
@@ -14,6 +15,7 @@ export default {
       },
       backgroundImage: {
         'gradient-dark': 'linear-gradient(135deg, #0f0c29, #302b63, #24243e)',
+        'gradient-light': 'linear-gradient(135deg, #f0f9ff, #e0f2fe, #f0f5fa)',
       },
     },
   },

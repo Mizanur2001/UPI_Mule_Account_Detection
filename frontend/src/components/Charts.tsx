@@ -42,8 +42,8 @@ export const RiskDistributionChart: React.FC<RiskDistributionChartProps> = ({ sc
   ];
 
   return (
-    <div className="h-80 bg-slate-800 rounded-lg p-4">
-      <h3 className="text-white font-semibold mb-4">Risk Score Distribution</h3>
+    <div className="h-80 dark:bg-slate-800 dark:text-white bg-slate-100 text-slate-900 rounded-lg p-4">
+      <h3 className="font-semibold mb-4">Risk Score Distribution</h3>
       <ResponsiveContainer width="100%" height="100%">
         <BarChart data={data} margin={{ top: 20, right: 30, left: 0, bottom: 20 }}>
           <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
@@ -78,8 +78,8 @@ export const RiskBreakdownChart: React.FC<RiskBreakdownChartProps> = ({
   ];
 
   return (
-    <div className="h-80 bg-slate-800 rounded-lg p-4">
-      <h3 className="text-white font-semibold mb-4">Risk Level Breakdown</h3>
+    <div className="h-80 dark:bg-slate-800 dark:text-white bg-slate-100 text-slate-900 rounded-lg p-4">
+      <h3 className="font-semibold mb-4">Risk Level Breakdown</h3>
       <ResponsiveContainer width="100%" height="100%">
         <PieChart>
           <Pie
@@ -112,11 +112,11 @@ export const SignalHeatmap: React.FC<SignalHeatmapProps> = ({ scores, limit = 20
   const topScores = scores.slice(0, limit);
 
   return (
-    <div className="bg-slate-800 rounded-lg p-4 overflow-x-auto">
-      <h3 className="text-white font-semibold mb-4">Signal Heatmap — Top {limit} Risky Accounts</h3>
-      <table className="w-full text-sm text-gray-300">
+    <div className="dark:bg-slate-800 dark:text-gray-300 bg-slate-100 text-slate-700 rounded-lg p-4 overflow-x-auto">
+      <h3 className="dark:text-white text-slate-900 font-semibold mb-4">Signal Heatmap — Top {limit} Risky Accounts</h3>
+      <table className="w-full text-sm">
         <thead>
-          <tr className="border-b border-slate-700">
+          <tr className="dark:border-slate-700 border-slate-300 border-b">
             <th className="text-left py-2 px-4">Account</th>
             <th className="text-right py-2 px-4">Behavioral</th>
             <th className="text-right py-2 px-4">Graph</th>
@@ -128,7 +128,7 @@ export const SignalHeatmap: React.FC<SignalHeatmapProps> = ({ scores, limit = 20
         </thead>
         <tbody>
           {topScores.map((score) => (
-            <tr key={score.account_id} className="border-b border-slate-700 hover:bg-slate-700">
+            <tr key={score.account_id} className="dark:border-slate-700 dark:hover:bg-slate-700 border-slate-300 dark:text-gray-300 border-b hover:bg-slate-200">
               <td className="py-2 px-4 font-mono text-xs">{score.account_id}</td>
               <td className="text-right py-2 px-4">
                 <ScoreCell value={score.behavioral_score} />
@@ -145,7 +145,7 @@ export const SignalHeatmap: React.FC<SignalHeatmapProps> = ({ scores, limit = 20
               <td className="text-right py-2 px-4">
                 <ScoreCell value={score.ml_anomaly_score} />
               </td>
-              <td className="text-right py-2 px-4 font-bold text-blue-400">
+              <td className="text-right py-2 px-4 font-bold dark:text-blue-400 text-blue-600">
                 {Math.round(score.risk_score)}
               </td>
             </tr>

@@ -32,29 +32,30 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
   const activeTabLabel = TABS.find(t => t.id === activeTab)?.label || '';
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 dark:from-white dark:via-blue-50 dark:to-white transition-colors duration-500">
       {/* Header */}
-      <header className="bg-gradient-dark border-b border-slate-700 sticky top-0 z-40">
+      <header className="bg-gradient-dark dark:bg-gradient-light border-b border-slate-700 dark:border-slate-200 sticky top-0 z-40 transition-colors duration-500">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center justify-between flex-wrap gap-4">
             <div className="flex items-center gap-3">
-              <Shield className="text-blue-400" size={32} />
+              <Shield className="text-blue-400 dark:text-blue-600" size={32} />
               <div>
-                <h1 className="text-2xl font-bold text-white">UPI Mule Detection</h1>
-                <p className="text-sm text-gray-400">Real-time fraud detection platform</p>
+                <h1 className="text-2xl font-bold text-white dark:text-slate-900">UPI Mule Detection</h1>
+                <p className="text-sm text-gray-400 dark:text-gray-600">Real-time fraud detection platform</p>
               </div>
             </div>
             <div className="flex items-center gap-4">
               <button
                 onClick={toggleTheme}
-                className="p-2 rounded-lg bg-slate-700 hover:bg-slate-600 transition text-yellow-400"
+                className="p-2 rounded-lg transition-all duration-300 transform hover:scale-110 bg-slate-700 dark:bg-slate-200 hover:bg-slate-600 dark:hover:bg-slate-300 text-yellow-400 dark:text-yellow-600"
                 title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
+                aria-label="Toggle theme"
               >
                 {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
               </button>
-              <div className="text-right hidden sm:block">
-                <p className="text-sm text-gray-400">Status: <span className="text-green-400 font-semibold">● Online</span></p>
-                <p className="text-xs text-gray-500">{new Date().toLocaleString()}</p>
+              <div className="text-right hidden sm:block transition-colors duration-300">
+                <p className="text-sm text-gray-400 dark:text-gray-600">Status: <span className="text-green-400 dark:text-green-600 font-semibold">● Online</span></p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">{new Date().toLocaleString()}</p>
               </div>
             </div>
           </div>
@@ -62,7 +63,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
       </header>
 
       {/* Tabs */}
-      <div className="bg-slate-800 border-b border-slate-700 overflow-x-auto">
+      <div className="bg-slate-800 dark:bg-slate-100 border-b border-slate-700 dark:border-slate-300 overflow-x-auto transition-colors duration-500">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex gap-2 overflow-x-auto scroll-smooth">
             {TABS.map((tab) => (
@@ -71,8 +72,8 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
                 onClick={() => onTabChange(tab.id)}
                 className={`flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 transition whitespace-nowrap ${
                   activeTab === tab.id
-                    ? 'border-blue-500 text-blue-400'
-                    : 'border-transparent text-gray-400 hover:text-gray-300'
+                    ? 'border-blue-500 dark:border-blue-600 text-blue-400 dark:text-blue-600'
+                    : 'border-transparent text-gray-400 dark:text-gray-600 hover:text-gray-300 dark:hover:text-gray-700'
                 }`}
               >
                 {tab.icon}
@@ -95,7 +96,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
       </main>
 
       {/* Footer */}
-      <footer className="border-t border-slate-700 bg-slate-900 mt-12">
+      <footer className="border-t border-slate-700 dark:border-slate-300 bg-slate-900 dark:bg-white mt-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <p className="text-center text-sm text-gray-500">
             UPI Mule Detection v2.0 · CSIC 1.0 Stage III

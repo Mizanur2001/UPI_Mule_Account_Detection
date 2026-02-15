@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { RiskScore, HealthStats } from './types/api';
 import { apiService } from '@services/api';
-import { useAsync, usePoll } from '@hooks/useAsync';
 import { DashboardLayout } from '@components/DashboardLayout';
 import { ErrorBoundary } from '@components/ErrorBoundary';
 import { Toast } from '@components/Toast';
@@ -20,85 +19,85 @@ const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState('command-center');
   const [scores, setScores] = useState<RiskScore[]>([]);
   const [stats, setStats] = useState<HealthStats | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
 
-  // Fetch all accounts and score them
-  const { data, loading: scoresLoading, error: scoresError } = useAsync(async () => {
-    try {
-      const health = await apiService.getHealth();
-      setStats(health);
-
-      // Get all unique account IDs
-      const accounts = [];
-      // For now, we'll fetch stats which should give us an overview
-      // In production, you'd have an endpoint to list all accounts
-      return [];
-    } catch (err) {
-      throw err;
-    }
-  });
-
-  // Poll for updates every 30 seconds
-  const pollStats = usePoll(async () => {
-    try {
-      const health = await apiService.getHealth();
-      setStats(health);
-
-      // For demo, generate sample scores if not available
-      if (scores.length === 0) {
-        // Try to batch score some demo accounts
-        const demoAccounts = [
-          'mule_aggregator@upi',
-          'circle_node_1@upi',
-          'chain_node_1@upi',
-          'device_ring_1@upi',
-          'new_mule_account@upi',
-          'user_1@upi',
-          'user_2@upi',
-          'user_3@upi',
-        ];
-
-        try {
-          const batchScores = await apiService.batchScore(demoAccounts);
-          const scoreArray = Object.values(batchScores) as RiskScore[];
-          setScores(scoreArray);
-        } catch (err) {
-          console.log('Demo scores not available, using empty state');
-        }
-      }
-
-      return health;
-    } catch (err) {
-      console.error('Poll error:', err);
-      throw err;
-    }
-  }, 30000, scores.length === 0);
-
-  // Initialize scores on mount
+  // Single unified effect to load all data
   useEffect(() => {
-    const initializeScores = async () => {
+    const loadAllData = async () => {
       try {
-        // Get all accounts from backend
-        const response = await fetch('http://localhost:8000/accounts');
-        const data = await response.json();
-        const allAccountIds = data.accounts || [];
+        setIsLoading(true);
+        setError(null);
+        console.log('[App] Starting data load...');
+
+        // Step 1: Fetch health stats
+        console.log('[App] Fetching health stats...');
+        const health = await apiService.getHealth();
+        setStats(health);
+        console.log('[App] Health stats loaded:', { accounts: health.total_accounts, txns: health.total_transactions });
+
+        // Step 2: Fetch all account IDs
+        console.log('[App] Fetching accounts list...');
+        const accountsResponse = await fetch('http://localhost:8000/accounts');
+        if (!accountsResponse.ok) {
+          throw new Error(`Failed to fetch accounts: ${accountsResponse.status}`);
+        }
+        const accountsData = await accountsResponse.json();
+        const allAccountIds: string[] = accountsData.accounts || [];
+        console.log(`[App] Account list retrieved: ${allAccountIds.length} accounts`);
 
         if (allAccountIds.length === 0) {
-          console.warn('No accounts found from backend');
-          return;
+          throw new Error('No accounts found from backend');
         }
 
-        console.log(`Loading ${allAccountIds.length} accounts...`);
+        // Step 3: Batch score all accounts (with retry logic)
+        console.log(`[App] Batch scoring ${allAccountIds.length} accounts...`);
+        let batchResponse;
+        let retries = 0;
+        while (retries < 3) {
+          try {
+            batchResponse = await apiService.batchScore(allAccountIds);
+            break;
+          } catch (err) {
+            retries++;
+            console.warn(`[App] Batch score attempt ${retries} failed, retrying...`);
+            if (retries >= 3) throw err;
+            await new Promise(r => setTimeout(r, 1000)); // Wait 1s before retry
+          }
+        }
+
+        if (!batchResponse || typeof batchResponse !== 'object') {
+          throw new Error(`Invalid batch response type: ${typeof batchResponse}`);
+        }
+
+        const scoreArray = Object.values(batchResponse) as RiskScore[];
+        console.log(`[App] Batch score returned: ${scoreArray.length} scores`);
         
-        // Batch score all accounts
-        const batchScores = await apiService.batchScore(allAccountIds);
-        const scoreArray = Object.values(batchScores) as RiskScore[];
-        setScores(scoreArray.sort((a, b) => b.risk_score - a.risk_score));
+        // Filter valid scores
+        const validScores = scoreArray.filter(
+          s => s && s.account_id && s.risk_level && typeof s.risk_score === 'number'
+        );
+        console.log(`[App] Valid scores after filtering: ${validScores.length}/${scoreArray.length}`);
+        
+        if (validScores.length === 0) {
+          throw new Error('No valid scores returned from batch score');
+        }
+
+        // Sort by risk (highest first)
+        const sortedScores = validScores.sort((a, b) => b.risk_score - a.risk_score);
+        console.log(`[App] Data load complete. Top risk accounts:`, sortedScores.slice(0, 3));
+        
+        setScores(sortedScores);
+        setIsLoading(false);
       } catch (err) {
-        console.error('Failed to initialize scores:', err);
+        const error = err instanceof Error ? err : new Error(String(err));
+        console.error('[App] Data load failed:', error);
+        setError(error);
+        setIsLoading(false);
       }
     };
 
-    initializeScores();
+    loadAllData();
   }, []);
 
   const renderTabContent = () => {
@@ -108,16 +107,16 @@ const App: React.FC = () => {
           <CommandCenter
             scores={scores}
             stats={stats}
-            loading={scoresLoading}
-            error={scoresError}
+            loading={isLoading}
+            error={error}
           />
         );
       case 'risk-analysis':
         return (
           <RiskAnalysis
             scores={scores}
-            loading={scoresLoading}
-            error={scoresError}
+            loading={isLoading}
+            error={error}
           />
         );
       case 'network':
@@ -136,10 +135,10 @@ const App: React.FC = () => {
       <ThemeProvider>
         <ToastProvider>
           <DashboardLayout activeTab={activeTab} onTabChange={setActiveTab}>
-            {scoresError && (
+            {error && !isLoading && (
               <ErrorAlert
                 title="Connection Error"
-                message="Failed to connect to backend. Ensure the FastAPI server is running."
+                message={`Failed to load data: ${error.message}`}
               />
             )}
             {renderTabContent()}
