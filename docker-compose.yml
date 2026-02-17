@@ -1,0 +1,44 @@
+# UPI Mule Detection Platform — Docker Compose
+# Run: docker-compose up --build
+
+version: "3.9"
+
+services:
+  # Backend API
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: mule-detection-api
+    ports:
+      - "8000:8000"
+    environment:
+      - MULE_API_KEY=${MULE_API_KEY:-csic-mule-detect-2026}
+      - CORS_ORIGINS=http://localhost:5173,http://localhost:3000,http://frontend:5173
+    volumes:
+      - ./data:/app/data:ro
+      - ./logs:/app/logs
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+
+  # Frontend (Vite dev server)
+  frontend:
+    image: node:20-slim
+    container_name: mule-detection-frontend
+    working_dir: /app
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    command: sh -c "npm install && npm run dev -- --host 0.0.0.0"
+    depends_on:
+      backend:
+        condition: service_healthy
+    environment:
+      - VITE_API_BASE=http://localhost:8000
+    restart: unless-stopped

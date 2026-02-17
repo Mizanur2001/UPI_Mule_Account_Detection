@@ -111,7 +111,7 @@ export default function MLInsights({ data }) {
       </div>
 
       {/* Feature contribution */}
-      {/* <div className="chart-container" style={{ marginTop: '1.2rem' }}>
+      <div className="chart-container" style={{ marginTop: '1.2rem' }}>
         <h3>Feature Contribution Analysis</h3>
         <Plot
           data={[barTrace]}
@@ -124,7 +124,7 @@ export default function MLInsights({ data }) {
           config={{ responsive: true, displayModeBar: false }}
           style={{ width: '100%' }}
         />
-      </div> */}
+      </div>
 
       <div className="info-box info" style={{ marginTop: '1rem' }}>
         <strong>Innovation:</strong> Our Isolation Forest is implemented from scratch in pure NumPy —

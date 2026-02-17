@@ -1,0 +1,25 @@
+{
+  "trained_at": "2026-02-17T13:24:24.018260Z",
+  "n_accounts": 80,
+  "n_features": 17,
+  "feature_names": [
+    "total_txns",
+    "total_sent",
+    "total_recv",
+    "amount_sent",
+    "amount_recv",
+    "avg_amount",
+    "max_amount",
+    "std_amount",
+    "unique_senders",
+    "unique_receivers",
+    "pass_through_ratio",
+    "degree_ratio",
+    "age_days",
+    "n_devices",
+    "shared_device_accounts",
+    "txns_per_day",
+    "volume_per_day"
+  ],
+  "n_trees": 100
+}

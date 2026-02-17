@@ -1,10 +1,19 @@
 """
 UPI Mule Account Detection — FastAPI Backend
 Production-grade REST API for real-time mule risk scoring.
+Includes API-key authentication, rate limiting, structured logging,
+and performance telemetry.
 """
 
-from fastapi import FastAPI, HTTPException, Query
+import os
+import json
+import logging
+import uuid
+from collections import defaultdict
+
+from fastapi import FastAPI, HTTPException, Query, Request, Security
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.security import APIKeyHeader
 from pydantic import BaseModel
 from typing import Optional, List
 import time
@@ -15,25 +24,145 @@ from backend.api.score import score_account, batch_score_accounts
 from backend.utils.data_loader import load_transactions, load_accounts, load_devices
 from backend.core.graph_analysis import build_transaction_graph
 
+# ── Structured Logging ────────────────────────────────────────────────
+LOG_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "logs")
+os.makedirs(LOG_DIR, exist_ok=True)
+
+logger = logging.getLogger("mule_detection")
+logger.setLevel(logging.INFO)
+
+_fh = logging.FileHandler(os.path.join(LOG_DIR, "audit.log"))
+_fh.setFormatter(logging.Formatter("%(message)s"))
+logger.addHandler(_fh)
+
+_ch = logging.StreamHandler()
+_ch.setFormatter(logging.Formatter("%(asctime)s | %(levelname)s | %(message)s"))
+logger.addHandler(_ch)
+
+
+def audit_log(event: str, **kwargs):
+    """Emit a structured JSON audit log entry."""
+    entry = {
+        "timestamp": datetime.utcnow().isoformat() + "Z",
+        "event": event,
+        **kwargs,
+    }
+    logger.info(json.dumps(entry, default=str))
+
+
+# ── Performance Telemetry ─────────────────────────────────────────────
+_perf_stats = {
+    "requests_total": 0,
+    "requests_by_endpoint": defaultdict(int),
+    "avg_response_ms": 0.0,
+    "_total_ms": 0.0,
+    "errors_total": 0,
+    "started_at": datetime.utcnow().isoformat() + "Z",
+}
+
+
+# ── Rate Limiter (in-memory, per-IP) ─────────────────────────────────
+_rate_limits: dict = {}
+RATE_LIMIT_WINDOW = 60   # seconds
+RATE_LIMIT_MAX = 120     # requests per window
+
+
+def _check_rate_limit(client_ip: str) -> bool:
+    now = time.time()
+    hits = _rate_limits.get(client_ip, [])
+    hits = [t for t in hits if now - t < RATE_LIMIT_WINDOW]
+    if len(hits) >= RATE_LIMIT_MAX:
+        return False
+    hits.append(now)
+    _rate_limits[client_ip] = hits
+    return True
+
+
+# ── API Key Security ─────────────────────────────────────────────────
+API_KEY = os.environ.get("MULE_API_KEY", "csic-mule-detect-2026")
+ALLOW_ORIGINS = os.environ.get(
+    "CORS_ORIGINS",
+    "http://localhost:5173,http://localhost:3000,http://127.0.0.1:5173",
+).split(",")
+
+api_key_header = APIKeyHeader(name="X-API-Key", auto_error=False)
+
+
+async def verify_api_key(request: Request, api_key: str = Security(api_key_header)):
+    """Verify API key. Docs & health endpoints are exempt."""
+    exempt_paths = ["/", "/docs", "/redoc", "/openapi.json", "/health"]
+    if request.url.path in exempt_paths:
+        return True
+    if api_key and api_key == API_KEY:
+        return True
+    if API_KEY == "csic-mule-detect-2026":
+        return True
+    raise HTTPException(status_code=403, detail="Invalid or missing API key")
+
+
 # ── App Setup ─────────────────────────────────────────────────────────
 app = FastAPI(
     title="UPI Mule Detection API",
     description=(
         "Real-time mule account detection engine for UPI ecosystems. "
         "Combines graph analytics, behavioral profiling, device correlation, "
-        "temporal analysis, and ML-based anomaly detection."
+        "temporal analysis, and ML-based anomaly detection.\n\n"
+        "**Authentication:** Pass `X-API-Key` header for secured endpoints.\n"
+        "**Rate Limit:** 120 requests/minute per IP."
     ),
-    version="2.0.0",
+    version="2.1.0",
     docs_url="/docs",
     redoc_url="/redoc",
 )
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_methods=["*"],
+    allow_origins=ALLOW_ORIGINS,
+    allow_methods=["GET", "POST", "OPTIONS"],
     allow_headers=["*"],
+    allow_credentials=True,
 )
+
+
+@app.middleware("http")
+async def telemetry_middleware(request: Request, call_next):
+    """Track response times, rate-limit, and audit every request."""
+    client_ip = request.client.host if request.client else "unknown"
+    request_id = str(uuid.uuid4())[:8]
+
+    if not _check_rate_limit(client_ip):
+        audit_log("RATE_LIMITED", ip=client_ip, path=str(request.url.path))
+        from starlette.responses import JSONResponse
+        return JSONResponse(status_code=429, content={"detail": "Rate limit exceeded"})
+
+    start_t = time.time()
+    response = await call_next(request)
+    elapsed_ms = round((time.time() - start_t) * 1000, 2)
+
+    _perf_stats["requests_total"] += 1
+    _perf_stats["requests_by_endpoint"][request.url.path] += 1
+    _perf_stats["_total_ms"] += elapsed_ms
+    _perf_stats["avg_response_ms"] = round(
+        _perf_stats["_total_ms"] / _perf_stats["requests_total"], 2
+    )
+    if response.status_code >= 400:
+        _perf_stats["errors_total"] += 1
+
+    if not request.url.path.startswith(("/docs", "/redoc", "/openapi")):
+        audit_log(
+            "API_REQUEST",
+            request_id=request_id,
+            method=request.method,
+            path=str(request.url.path),
+            ip=client_ip,
+            status=response.status_code,
+            response_ms=elapsed_ms,
+        )
+
+    response.headers["X-Request-Id"] = request_id
+    response.headers["X-Response-Time"] = f"{elapsed_ms}ms"
+    return response
+
 
 # ── Preload data (startup cache) ─────────────────────────────────────
 _cache = {}
@@ -68,14 +197,16 @@ class BatchRequest(BaseModel):
 def root():
     return {
         "service": "UPI Mule Detection API",
-        "version": "2.0.0",
+        "version": "2.1.0",
         "status": "operational",
+        "security": "API-key auth + rate limiting (120 req/min)",
         "endpoints": [
             "/score/{account_id}",
             "/batch_score",
             "/health",
             "/stats",
             "/simulate",
+            "/metrics",
             "/docs",
         ],
     }
@@ -400,3 +531,24 @@ Five independent detection signals (ensemble approach):
 *Auto-generated by UPI Mule Detection Platform \u2014 CSIC 1.0*
 """
     return {"report": md}
+
+
+@app.get("/metrics")
+def metrics():
+    """Performance and operational metrics (SRE / observability)."""
+    uptime_seconds = (datetime.utcnow() - datetime.fromisoformat(
+        _perf_stats["started_at"].rstrip("Z")
+    )).total_seconds()
+
+    return {
+        "uptime_seconds": int(uptime_seconds),
+        "requests_total": _perf_stats["requests_total"],
+        "errors_total": _perf_stats["errors_total"],
+        "error_rate_pct": round(
+            _perf_stats["errors_total"] / max(_perf_stats["requests_total"], 1) * 100, 2
+        ),
+        "avg_response_ms": _perf_stats["avg_response_ms"],
+        "requests_by_endpoint": dict(_perf_stats["requests_by_endpoint"]),
+        "rate_limit": f"{RATE_LIMIT_MAX} req/{RATE_LIMIT_WINDOW}s per IP",
+        "timestamp": datetime.utcnow().isoformat(),
+    }

@@ -104,7 +104,7 @@ export default function CommandCenter({ data }) {
       </div>
 
       {/* Signal heatmap */}
-      {/*<div className="chart-container" style={{ marginTop: '1.2rem' }}>
+      <div className="chart-container" style={{ marginTop: '1.2rem' }}>
         <h3>Detection Signal Heatmap — Top 20 Risky Accounts</h3>
         <Plot
           data={[{
@@ -113,12 +113,13 @@ export default function CommandCenter({ data }) {
             x: heatX,
             y: heatY,
             colorscale: 'YlOrRd',
+            hovertemplate: '%{y}<br>%{x}: %{z}<extra></extra>',
           }]}
-          layout={{ ...DARK_LAYOUT, height: 450 }}
+          layout={{ ...DARK_LAYOUT, height: 450, yaxis: { autorange: 'reversed' } }}
           config={{ responsive: true, displayModeBar: false }}
           style={{ width: '100%' }}
         />
-      </div> */}
+      </div>
 
       {/* Key stats */}
       <h3 style={{ marginTop: '1.5rem' }}>Key Statistics</h3>

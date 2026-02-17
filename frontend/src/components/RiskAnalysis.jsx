@@ -26,13 +26,15 @@ export default function RiskAnalysis({ data }) {
   const [minScore, setMinScore] = useState(0);
   const [sortIndex, setSortIndex] = useState(0);
   const [selectedAccount, setSelectedAccount] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
 
   const filtered = useMemo(() => {
     const sort = SORT_OPTIONS[sortIndex];
     return data.scores
       .filter(s => selectedLevels.includes(s.risk_level) && s.risk_score >= minScore)
+      .filter(s => !searchQuery || s.account.toLowerCase().includes(searchQuery.toLowerCase()))
       .sort((a, b) => sort.asc ? a[sort.col] - b[sort.col] : b[sort.col] - a[sort.col]);
-  }, [data.scores, selectedLevels, minScore, sortIndex]);
+  }, [data.scores, selectedLevels, minScore, sortIndex, searchQuery]);
 
   const drillAccount = selectedAccount || (filtered.length > 0 ? filtered[0].account : null);
   const drillData = drillAccount ? data.scores.find(s => s.account === drillAccount) : null;
@@ -58,7 +60,22 @@ export default function RiskAnalysis({ data }) {
       <h2><Icon name="crisis_alert" size={24} style={{ marginRight: 8 }} />Account Risk Scoring &amp; Investigation</h2>
 
       {/* Filters */}
-      <div className="grid-row cols-3">
+      <div className="grid-row cols-2" style={{ gap: '1rem', marginBottom: '0.5rem' }}>
+        <div className="form-group">
+          <label><Icon name="search" size={16} style={{ marginRight: 4 }} />Search Account</label>
+          <input
+            type="text"
+            placeholder="Type to search accounts..."
+            value={searchQuery}
+            onChange={e => setSearchQuery(e.target.value)}
+            style={{
+              width: '100%', padding: '0.55rem 0.8rem',
+              border: '1px solid var(--border-subtle)',
+              borderRadius: 'var(--radius-sm)',
+              fontSize: '0.9rem', fontFamily: 'inherit',
+            }}
+          />
+        </div>
         <div className="form-group">
           <label>Filter by Risk Level</label>
           <div className="multiselect">
@@ -74,6 +91,8 @@ export default function RiskAnalysis({ data }) {
             ))}
           </div>
         </div>
+      </div>
+      <div className="grid-row cols-2" style={{ gap: '1rem' }}>
         <div className="form-group">
           <label>Minimum Risk Score: {minScore}</label>
           <input type="range" min={0} max={100} value={minScore}
