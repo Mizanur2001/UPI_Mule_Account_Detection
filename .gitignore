@@ -44,3 +44,9 @@ Thumbs.db
 # =========================
 report/*.pdf
 ppt/*.pptx
+
+
+#--------------------------
+#  Node Modules (if we using Node for frontend)
+#--------------------------
+node_modules/
