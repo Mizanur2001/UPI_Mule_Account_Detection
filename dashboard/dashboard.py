@@ -51,8 +51,8 @@ st.markdown("""
         margin-bottom: 1.5rem;
         box-shadow: 0 4px 15px rgba(0,0,0,0.3);
     }
-    .header-bar h1 { margin: 0; font-size: 1.8rem; letter-spacing: 1px; }
-    .header-bar p { margin: 0.3rem 0 0 0; opacity: 0.85; font-size: 0.95rem; }
+    .header-bar h1 { margin: 0; font-size: 1.8rem; letter-spacing: 1px; color: #ffffff !important; text-shadow: 0 2px 4px rgba(0,0,0,0.3); }
+    .header-bar p { margin: 0.3rem 0 0 0; opacity: 0.85; font-size: 0.95rem; color: #e0e0ff !important; }
     
     /* Metric cards */
     .metric-card {
@@ -109,6 +109,15 @@ st.markdown("""
         background: linear-gradient(180deg, #0f0c29, #1a1a2e);
     }
     section[data-testid="stSidebar"] .stMarkdown { color: #e0e0e0; }
+    section[data-testid="stSidebar"] h1,
+    section[data-testid="stSidebar"] h2,
+    section[data-testid="stSidebar"] h3,
+    section[data-testid="stSidebar"] h4,
+    section[data-testid="stSidebar"] label,
+    section[data-testid="stSidebar"] span,
+    section[data-testid="stSidebar"] p {
+        color: #ffffff !important;
+    }
     
     /* Tab styling */
     .stTabs [data-baseweb="tab-list"] { gap: 8px; }
