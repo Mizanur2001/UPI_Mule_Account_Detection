@@ -80,9 +80,14 @@ def _check_rate_limit(client_ip: str) -> bool:
 
 # ── API Key Security ─────────────────────────────────────────────────
 API_KEY = os.environ.get("MULE_API_KEY", "csic-mule-detect-2026")
+# ALLOW_ORIGINS = os.environ.get(
+#     "CORS_ORIGINS",
+#     "http://localhost:5173,http://localhost:3000,http://127.0.0.1:5173",
+# ).split(",")
+
 ALLOW_ORIGINS = os.environ.get(
     "CORS_ORIGINS",
-    "http://localhost:5173,http://localhost:3000,http://127.0.0.1:5173",
+    "https://upi.mizanur.in,http://upi.mizanur.in,http://localhost:3000,http://localhost:5173",
 ).split(",")
 
 api_key_header = APIKeyHeader(name="X-API-Key", auto_error=False)
