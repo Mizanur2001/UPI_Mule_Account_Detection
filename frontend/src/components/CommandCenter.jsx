@@ -50,23 +50,23 @@ export default function CommandCenter({ data }) {
       <div className="metric-grid cols-5">
         <div className="metric-card critical">
           <div className="value">{s.critical_count}</div>
-          <div className="label"><Icon name="circle" size={14} color="#ef4444" /> CRITICAL</div>
+          <div className="label"> CRITICAL</div>
         </div>
         <div className="metric-card high">
           <div className="value">{s.high_count}</div>
-          <div className="label"><Icon name="circle" size={14} color="#f97316" /> HIGH RISK</div>
+          <div className="label"> HIGH RISK</div>
         </div>
         <div className="metric-card medium">
           <div className="value">{s.medium_count}</div>
-          <div className="label"><Icon name="circle" size={14} color="#eab308" /> MEDIUM</div>
+          <div className="label"> MEDIUM</div>
         </div>
         <div className="metric-card low">
           <div className="value">{s.low_count}</div>
-          <div className="label"><Icon name="circle" size={14} color="#22c55e" /> LOW</div>
+          <div className="label"> LOW</div>
         </div>
         <div className="metric-card info">
-          <div className="value">{Math.round(s.avg_score)}</div>
-          <div className="label"><Icon name="trending_up" size={14} /> AVG SCORE</div>
+          <div className="value">{s.max_score}</div>
+          <div className="label"> HIGHEST SCORE</div>
         </div>
       </div>
 
@@ -122,7 +122,7 @@ export default function CommandCenter({ data }) {
       </div>
 
       {/* Key stats */}
-      <h3 style={{ marginTop: '1.5rem' }}>Key Statistics</h3>
+      {/* <h3 style={{ marginTop: '1.5rem' }}>Key Statistics</h3>
       <div className="metric-grid cols-4" style={{ marginTop: '0.6rem' }}>
         <div className="metric-card info">
           <div className="value">{s.total_accounts}</div>
@@ -140,7 +140,7 @@ export default function CommandCenter({ data }) {
           <div className="value">{s.median_score}</div>
           <div className="label">Median Score</div>
         </div>
-      </div>
+      </div> */}
     </div>
   );
 }

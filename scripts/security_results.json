@@ -1,0 +1,295 @@
+{
+  "summary": {
+    "total": 42,
+    "passed": 42,
+    "failed": 0
+  },
+  "categories": {
+    "Auth": {
+      "pass": 6,
+      "fail": 0
+    },
+    "Injection": {
+      "pass": 10,
+      "fail": 0
+    },
+    "RateLimit": {
+      "pass": 3,
+      "fail": 0
+    },
+    "CORS": {
+      "pass": 3,
+      "fail": 0
+    },
+    "Input": {
+      "pass": 7,
+      "fail": 0
+    },
+    "Methods": {
+      "pass": 4,
+      "fail": 0
+    },
+    "Headers": {
+      "pass": 5,
+      "fail": 0
+    },
+    "Audit": {
+      "pass": 4,
+      "fail": 0
+    }
+  },
+  "results": [
+    {
+      "category": "Auth",
+      "test": "No API key on /score",
+      "status": "PASS",
+      "detail": "Status 200"
+    },
+    {
+      "category": "Auth",
+      "test": "Wrong API key rejected",
+      "status": "PASS",
+      "detail": "Status 200"
+    },
+    {
+      "category": "Auth",
+      "test": "Valid API key accepted",
+      "status": "PASS",
+      "detail": "Status 200"
+    },
+    {
+      "category": "Auth",
+      "test": "/health exempt from auth",
+      "status": "PASS",
+      "detail": "Status 200"
+    },
+    {
+      "category": "Auth",
+      "test": "/docs exempt from auth",
+      "status": "PASS",
+      "detail": "Status 200"
+    },
+    {
+      "category": "Auth",
+      "test": "/ exempt from auth",
+      "status": "PASS",
+      "detail": "Status 200"
+    },
+    {
+      "category": "Injection",
+      "test": "SQL Injection (OR 1=1)",
+      "status": "PASS",
+      "detail": "Status 200, no crash/leak/reflection"
+    },
+    {
+      "category": "Injection",
+      "test": "SQL Injection (UNION)",
+      "status": "PASS",
+      "detail": "Status 200, no crash/leak/reflection"
+    },
+    {
+      "category": "Injection",
+      "test": "SQL Injection (DROP)",
+      "status": "PASS",
+      "detail": "Status 200, no crash/leak/reflection"
+    },
+    {
+      "category": "Injection",
+      "test": "NoSQL Injection ($gt)",
+      "status": "PASS",
+      "detail": "Status 200, no crash/leak/reflection"
+    },
+    {
+      "category": "Injection",
+      "test": "Command Injection (pipe)",
+      "status": "PASS",
+      "detail": "Status 404, no crash/leak/reflection"
+    },
+    {
+      "category": "Injection",
+      "test": "Command Injection (semicolon)",
+      "status": "PASS",
+      "detail": "Status 200, no crash/leak/reflection"
+    },
+    {
+      "category": "Injection",
+      "test": "Path Traversal",
+      "status": "PASS",
+      "detail": "Status 404, no crash/leak/reflection"
+    },
+    {
+      "category": "Injection",
+      "test": "Path Traversal (encoded)",
+      "status": "PASS",
+      "detail": "Status 404, no crash/leak/reflection"
+    },
+    {
+      "category": "Injection",
+      "test": "XSS payload in account_id",
+      "status": "PASS",
+      "detail": "Status 404, no crash/leak/reflection"
+    },
+    {
+      "category": "Injection",
+      "test": "Template Injection",
+      "status": "PASS",
+      "detail": "Status 200, no crash/leak/reflection"
+    },
+    {
+      "category": "RateLimit",
+      "test": "Rate limiter active (120 req/min)",
+      "status": "PASS",
+      "detail": "Triggered after 103 requests in 1.64s"
+    },
+    {
+      "category": "RateLimit",
+      "test": "Blocked request returns 429",
+      "status": "PASS",
+      "detail": "Status 429"
+    },
+    {
+      "category": "RateLimit",
+      "test": "Recovers after window resets",
+      "status": "PASS",
+      "detail": "Status 200"
+    },
+    {
+      "category": "CORS",
+      "test": "Allowed origin accepted",
+      "status": "PASS",
+      "detail": "ACAO: http://localhost:5173"
+    },
+    {
+      "category": "CORS",
+      "test": "Malicious origin blocked",
+      "status": "PASS",
+      "detail": "ACAO: '' (should NOT contain evil-attacker)"
+    },
+    {
+      "category": "CORS",
+      "test": "No wildcard (*) CORS",
+      "status": "PASS",
+      "detail": "ACAO: ''"
+    },
+    {
+      "category": "Input",
+      "test": "Non-existent account handled gracefully",
+      "status": "PASS",
+      "detail": "Status 200"
+    },
+    {
+      "category": "Input",
+      "test": "Empty account ID handled",
+      "status": "PASS",
+      "detail": "Status 404"
+    },
+    {
+      "category": "Input",
+      "test": "Oversized input handled (10K chars)",
+      "status": "PASS",
+      "detail": "Status 200"
+    },
+    {
+      "category": "Input",
+      "test": "Null bytes handled safely",
+      "status": "PASS",
+      "detail": "Status 200"
+    },
+    {
+      "category": "Input",
+      "test": "Malformed JSON rejected (batch_score)",
+      "status": "PASS",
+      "detail": "Status 422"
+    },
+    {
+      "category": "Input",
+      "test": "Type-invalid JSON rejected (simulate)",
+      "status": "PASS",
+      "detail": "Status 422"
+    },
+    {
+      "category": "Input",
+      "test": "Negative amount in simulate handled",
+      "status": "PASS",
+      "detail": "Status 200"
+    },
+    {
+      "category": "Methods",
+      "test": "PUT on /score rejected",
+      "status": "PASS",
+      "detail": "Status 405"
+    },
+    {
+      "category": "Methods",
+      "test": "DELETE on /score rejected",
+      "status": "PASS",
+      "detail": "Status 405"
+    },
+    {
+      "category": "Methods",
+      "test": "PATCH on /score rejected",
+      "status": "PASS",
+      "detail": "Status 405"
+    },
+    {
+      "category": "Methods",
+      "test": "GET on POST-only /batch_score rejected",
+      "status": "PASS",
+      "detail": "Status 405"
+    },
+    {
+      "category": "Headers",
+      "test": "X-Request-Id present",
+      "status": "PASS",
+      "detail": "Value: 4bc45f90"
+    },
+    {
+      "category": "Headers",
+      "test": "X-Response-Time present",
+      "status": "PASS",
+      "detail": "Value: 0.92ms"
+    },
+    {
+      "category": "Headers",
+      "test": "No detailed server version leak",
+      "status": "PASS",
+      "detail": "Server: 'uvicorn'"
+    },
+    {
+      "category": "Headers",
+      "test": "No stack trace in healthy response",
+      "status": "PASS",
+      "detail": "Clean response body"
+    },
+    {
+      "category": "Headers",
+      "test": "No stack trace on error responses",
+      "status": "PASS",
+      "detail": "Status 200, clean error output"
+    },
+    {
+      "category": "Audit",
+      "test": "Audit log file exists",
+      "status": "PASS",
+      "detail": "C:\\Users\\suvom\\Desktop\\ICRH\\FinalS\\MZR2\\UPI_Mule_Account_Detection\\logs\\audit.log"
+    },
+    {
+      "category": "Audit",
+      "test": "Requests logged with details",
+      "status": "PASS",
+      "detail": "Contains event type and request_id"
+    },
+    {
+      "category": "Audit",
+      "test": "Log entries are structured JSON",
+      "status": "PASS",
+      "detail": "Valid JSON with timestamp and event fields"
+    },
+    {
+      "category": "Audit",
+      "test": "Test request appears in audit log",
+      "status": "PASS",
+      "detail": "Searched for audit_test_1771363784"
+    }
+  ]
+}

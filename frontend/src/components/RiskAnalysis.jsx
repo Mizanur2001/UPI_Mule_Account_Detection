@@ -36,9 +36,6 @@ export default function RiskAnalysis({ data }) {
       .sort((a, b) => sort.asc ? a[sort.col] - b[sort.col] : b[sort.col] - a[sort.col]);
   }, [data.scores, selectedLevels, minScore, sortIndex, searchQuery]);
 
-  const drillAccount = selectedAccount || (filtered.length > 0 ? filtered[0].account : null);
-  const drillData = drillAccount ? data.scores.find(s => s.account === drillAccount) : null;
-
   const toggleLevel = (lvl) => {
     setSelectedLevels(prev =>
       prev.includes(lvl) ? prev.filter(l => l !== lvl) : [...prev, lvl]
@@ -113,124 +110,122 @@ export default function RiskAnalysis({ data }) {
       </p>
 
       {/* Data Table */}
-      <div className="data-table-wrapper">
-        <table className="data-table">
+      <div className="data-table-wrapper risk-table-wrapper">
+        <table className="data-table risk-table">
           <thead>
             <tr>
-              <th>Account</th><th>Risk Score</th><th>Risk Level</th><th>Confidence</th>
+              <th>Account</th><th>Score</th><th>Level</th>
               <th>Behavioral</th><th>Graph</th><th>Device</th><th>Temporal</th>
-              <th>ML Anomaly</th><th>Signals</th><th>Top Reason</th>
+              <th>ML</th><th>Signals</th><th>Action</th>
             </tr>
           </thead>
           <tbody>
             {filtered.map(s => (
-              <tr key={s.account}>
-                <td>{s.account}</td>
-                <td>{s.risk_score}</td>
-                <td><span className={`risk-badge ${s.risk_level}`}>{s.risk_level}</span></td>
-                <td>{s.confidence}</td>
-                <td>{s.behavioral_score}</td>
-                <td>{s.graph_score}</td>
-                <td>{s.device_score}</td>
-                <td>{s.temporal_score}</td>
-                <td>{s.ml_anomaly_score}</td>
-                <td>{s.signal_count}</td>
-                <td>{s.top_reason}</td>
-              </tr>
+              <React.Fragment key={s.account}>
+                <tr
+                  className={`clickable-row ${selectedAccount === s.account ? 'row-active' : ''}`}
+                  onClick={() => setSelectedAccount(selectedAccount === s.account ? '' : s.account)}
+                  title="Click to view forensic report"
+                >
+                  <td>{s.account}</td>
+                  <td><strong>{s.risk_score}</strong></td>
+                  <td><span className={`risk-badge ${s.risk_level}`}>{s.risk_level}</span></td>
+                  <td>{s.behavioral_score}</td>
+                  <td>{s.graph_score}</td>
+                  <td>{s.device_score}</td>
+                  <td>{s.temporal_score}</td>
+                  <td>{s.ml_anomaly_score}</td>
+                  <td>{s.signal_count}</td>
+                  <td className="action-cell">{s.recommended_action}</td>
+                </tr>
+                {selectedAccount === s.account && (
+                  <tr className="inline-forensic-row">
+                    <td colSpan={10}>
+                      <div className="inline-forensic">
+                        <div className="inline-forensic-grid">
+                          {/* Left: Overview card */}
+                          <div className="inline-overview-card">
+                            <h4 className="inline-section-title">Overview</h4>
+                            <div className={`inline-overview-body ${s.risk_level.toLowerCase()}`}>
+                              <div className="inline-overview-row">
+                                <span className="inline-overview-label">Risk Level:</span>
+                                <span className="inline-overview-value">{s.risk_level}</span>
+                              </div>
+                              <div className="inline-overview-row">
+                                <span className="inline-overview-label">Confidence:</span>
+                                <span className="inline-overview-value">{s.confidence}</span>
+                              </div>
+                              <div className="inline-overview-row">
+                                <span className="inline-overview-label">Action:</span>
+                                <span className="inline-overview-value">{s.recommended_action}</span>
+                              </div>
+                              <div className="inline-overview-row">
+                                <span className="inline-overview-label">Signals:</span>
+                                <span className="inline-overview-value">{s.signal_count} active</span>
+                              </div>
+                              {s.reasons && s.reasons.length > 0 && (
+                                <div className="inline-overview-reasons">
+                                  <span className="inline-overview-label">Reasons:</span>
+                                  <ul className="inline-reasons-list">
+                                    {s.reasons.map((r, i) => (
+                                      <li key={i}>{r}</li>
+                                    ))}
+                                  </ul>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* Right: Spider/Radar chart */}
+                          <div className="inline-radar-card">
+                            <h4 className="inline-section-title">Signal Breakdown — {s.account}</h4>
+                            <Plot
+                              data={[{
+                                type: 'scatterpolar',
+                                r: [
+                                  s.behavioral_score, s.graph_score,
+                                  s.device_score, s.temporal_score,
+                                  s.ml_anomaly_score, s.behavioral_score,
+                                ],
+                                theta: ['Behavioral', 'Graph', 'Device', 'Temporal', 'ML Anomaly', 'Behavioral'],
+                                fill: 'toself',
+                                fillcolor: s.risk_level === 'CRITICAL' ? 'rgba(199,80,80,0.25)' :
+                                           s.risk_level === 'HIGH' ? 'rgba(212,138,90,0.25)' :
+                                           s.risk_level === 'MEDIUM' ? 'rgba(184,160,64,0.25)' :
+                                           'rgba(74,158,106,0.25)',
+                                line: {
+                                  color: s.risk_level === 'CRITICAL' ? '#c75050' :
+                                         s.risk_level === 'HIGH' ? '#d48a5a' :
+                                         s.risk_level === 'MEDIUM' ? '#b8a040' : '#4a9e6a',
+                                  width: 2,
+                                },
+                                name: s.account,
+                              }]}
+                              layout={{
+                                ...DARK_LAYOUT,
+                                height: 320,
+                                margin: { l: 60, r: 60, t: 30, b: 30 },
+                                polar: {
+                                  radialaxis: { visible: true, range: [0, 100], tickfont: { size: 10 } },
+                                  angularaxis: { tickfont: { size: 12 } },
+                                  bgcolor: 'rgba(0,0,0,0)',
+                                },
+                                showlegend: false,
+                              }}
+                              config={{ responsive: true, displayModeBar: false }}
+                              style={{ width: '100%' }}
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    </td>
+                  </tr>
+                )}
+              </React.Fragment>
             ))}
           </tbody>
         </table>
       </div>
-
-      {/* Drill-down */}
-      <hr className="divider" />
-      <h2><Icon name="search" size={24} style={{ marginRight: 8 }} />Forensic Drill-Down</h2>
-
-      <div className="form-group" style={{ maxWidth: 400 }}>
-        <label>Select account</label>
-        <select value={drillAccount || ''} onChange={e => setSelectedAccount(e.target.value)}>
-          {filtered.map(s => (
-            <option key={s.account} value={s.account}>{s.account}</option>
-          ))}
-        </select>
-      </div>
-
-      {drillData && (
-        <div className="grid-row cols-2-3" style={{ marginTop: '1rem' }}>
-          {/* Left: metrics */}
-          <div>
-            <div className="metric-grid cols-2" style={{ gap: '0.8rem' }}>
-              <div className="metric-card info">
-                <div className="value">{drillData.risk_score}/100</div>
-                <div className="label">Risk Score</div>
-              </div>
-              <div className="metric-card info">
-                <div className="value">
-                  {{'CRITICAL':<Icon name="circle" size={14} color="#ef4444" />,'HIGH':<Icon name="circle" size={14} color="#f97316" />,'MEDIUM':<Icon name="circle" size={14} color="#eab308" />,'LOW':<Icon name="circle" size={14} color="#22c55e" />}[drillData.risk_level]} {drillData.risk_level}
-                </div>
-                <div className="label">Risk Level</div>
-              </div>
-              <div className="metric-card info">
-                <div className="value">{drillData.confidence}</div>
-                <div className="label">Confidence</div>
-              </div>
-              <div className="metric-card info">
-                <div className="value">{drillData.signal_count}</div>
-                <div className="label">Active Signals</div>
-              </div>
-            </div>
-            <div className="info-box info" style={{ marginTop: '0.8rem' }}>
-              <strong>Action:</strong> {drillData.recommended_action}
-            </div>
-          </div>
-
-          {/* Right: radar chart */}
-          <div className="chart-container">
-            <Plot
-              data={[{
-                type: 'scatterpolar',
-                r: [
-                  drillData.behavioral_score, drillData.graph_score,
-                  drillData.device_score, drillData.temporal_score,
-                  drillData.ml_anomaly_score, drillData.behavioral_score,
-                ],
-                theta: ['Behavioral', 'Graph', 'Device', 'Temporal', 'ML Anomaly', 'Behavioral'],
-                fill: 'toself',
-                fillcolor: 'rgba(99,102,241,0.2)',
-                line: { color: '#6366f1', width: 2 },
-                name: drillData.account,
-              }]}
-              layout={{
-                ...DARK_LAYOUT,
-                height: 350,
-                polar: {
-                  radialaxis: { visible: true, range: [0, 100] },
-                  bgcolor: 'rgba(0,0,0,0)',
-                },
-                title: { text: `Signal Breakdown — ${drillData.account}`, font: { size: 13, color: '#e0e0e0' } },
-              }}
-              config={{ responsive: true, displayModeBar: false }}
-              style={{ width: '100%' }}
-            />
-          </div>
-        </div>
-      )}
-
-      {/* Evidence */}
-      {drillData && (
-        <>
-          <h3 style={{ marginTop: '1.2rem' }}><Icon name="assignment" size={20} style={{ marginRight: 6 }} />Evidence Trail</h3>
-          {drillData.reasons.length > 0 ? (
-            drillData.reasons.map((r, i) => (
-              <div className="evidence-item" key={i}><Icon name="arrow_right" size={16} color="#f97316" /> {r}</div>
-            ))
-          ) : (
-            <div className="info-box success">
-              No risk factors identified — account appears legitimate.
-            </div>
-          )}
-        </>
-      )}
 
       {/* Export */}
       <hr className="divider" />

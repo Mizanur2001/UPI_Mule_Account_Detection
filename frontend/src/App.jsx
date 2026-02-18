@@ -5,7 +5,7 @@ import RiskAnalysis from './components/RiskAnalysis';
 import MLInsights from './components/MLInsights';
 import NetworkGraph from './components/NetworkGraph';
 import TimelineTab from './components/TimelineTab';
-import Alerts from './components/Alerts';
+// import Alerts from './components/Alerts';
 import RealTimeAPI from './components/RealTimeAPI';
 import About from './components/About';
 import Icon from './components/Icon';
@@ -17,7 +17,7 @@ const TABS = [
   { id: 'ml',       label: 'ML Insights',     icon: 'psychology' },
   { id: 'network',  label: 'Network Graph',   icon: 'hub' },
   { id: 'timeline', label: 'Timeline',        icon: 'schedule' },
-  { id: 'alerts',   label: 'Alerts',          icon: 'notifications_active' },
+  // { id: 'alerts',   label: 'Alerts',          icon: 'notifications_active' },
   { id: 'api',      label: 'Real-Time API',   icon: 'bolt' },
   { id: 'about',    label: 'About',           icon: 'menu_book' },
 ];
@@ -27,6 +27,16 @@ export default function App() {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [darkMode, setDarkMode] = useState(() => {
+    const saved = localStorage.getItem('darkMode');
+    return saved ? JSON.parse(saved) : false;
+  });
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', darkMode ? 'dark' : 'light');
+    localStorage.setItem('darkMode', JSON.stringify(darkMode));
+  }, [darkMode]);
 
   useEffect(() => {
     fetchDashboardData()
@@ -70,12 +80,35 @@ export default function App() {
   };
 
   return (
-    <div className="app-container">
-      <Sidebar data={data} />
+    <div className={`app-container ${sidebarOpen ? '' : 'sidebar-collapsed'}`}>
+      {sidebarOpen && <Sidebar data={data} onToggle={() => setSidebarOpen(false)} />}
+      {!sidebarOpen && (
+        <button
+          className="sidebar-open-btn"
+          onClick={() => setSidebarOpen(true)}
+          title="Show Sidebar"
+          aria-label="Show Sidebar"
+        >
+          <Icon name="menu" size={22} />
+        </button>
+      )}
       <div className="main-content">
         <div className="header-bar">
-          <h1><Icon name="shield" size={28} style={{ marginRight: 8 }} /> UPI Mule Account Detection Platform</h1>
-          <p>Real-time detection of mule accounts &amp; collusive fraud networks in UPI transactions</p>
+          <div className="header-bar-top">
+            <div>
+              <h1><Icon name="shield" size={28} style={{ marginRight: 8 }} /> UPI Mule Account Detection Platform</h1>
+              <p>Real-time detection of mule accounts &amp; collusive fraud networks in UPI transactions</p>
+            </div>
+            <button
+              className="dark-mode-toggle"
+              onClick={() => setDarkMode(prev => !prev)}
+              title={darkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+              aria-label="Toggle dark mode"
+            >
+              <Icon name={darkMode ? 'light_mode' : 'dark_mode'} size={20} />
+              <span>{darkMode ? 'Light' : 'Dark'}</span>
+            </button>
+          </div>
         </div>
 
         <div className="tab-bar">

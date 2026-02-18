@@ -1,7 +1,7 @@
 import React from 'react';
 import Icon from './Icon';
 
-export default function Sidebar({ data }) {
+export default function Sidebar({ data, onToggle }) {
   const s = data.summary;
   const signals = [
     { name: 'Behavioral', weight: '25%', status: <Icon name="check_circle" size={16} color="#22c55e" /> },
@@ -16,6 +16,14 @@ export default function Sidebar({ data }) {
       <div className="sidebar-logo">
         <div className="logo-icon"><Icon name="shield" size={32} /></div>
         <h3>Control Panel</h3>
+        <button
+          className="sidebar-collapse-btn"
+          onClick={onToggle}
+          title="Hide Sidebar"
+          aria-label="Hide Sidebar"
+        >
+          <Icon name="chevron_left" size={20} />
+        </button>
       </div>
       <div className="divider" />
 
@@ -37,7 +45,7 @@ export default function Sidebar({ data }) {
       <span className="caption"><Icon name="circle" size={12} color="#eab308" /> {s.medium_count} MEDIUM · <Icon name="circle" size={12} color="#22c55e" /> {s.low_count} LOW</span>
 
       <div className="divider" />
-
+{/* 
       <div className="section-label">Detection Signals</div>
       <table>
         <thead>
@@ -52,7 +60,7 @@ export default function Sidebar({ data }) {
             </tr>
           ))}
         </tbody>
-      </table>
+      </table> */}
 
       <div className="version-label">UPI Mule Detection v2.0 · CSIC 1.0</div>
     </aside>

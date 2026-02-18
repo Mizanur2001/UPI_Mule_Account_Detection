@@ -10,8 +10,12 @@ export default function NetworkGraph() {
   const [riskFilter, setRiskFilter] = useState('all');
   const [graphData, setGraphData] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState([]);
+  const [selectedNode, setSelectedNode] = useState(null);
   const containerRef = useRef(null);
   const networkRef = useRef(null);
+  const nodesRef = useRef(null);
 
   useEffect(() => {
     if (!showGraph) return;
@@ -36,7 +40,10 @@ export default function NetworkGraph() {
       size: n.size,
       title: n.title,
       font: { color: '#1f2937', size: 10 },
+      _originalColor: n.color,
+      _originalSize: n.size,
     })));
+    nodesRef.current = nodes;
 
     const edges = new DataSet(graphData.edges.map((e, i) => ({
       id: `e-${i}`,
@@ -79,6 +86,49 @@ export default function NetworkGraph() {
     };
   }, [graphData]);
 
+  // Search handler
+  const handleSearch = (query) => {
+    setSearchQuery(query);
+    setSelectedNode(null);
+
+    if (!nodesRef.current || !query.trim()) {
+      setSearchResults([]);
+      // Reset all nodes to original appearance
+      if (nodesRef.current) {
+        const updates = [];
+        nodesRef.current.forEach(n => {
+          updates.push({ id: n.id, color: n._originalColor, size: n._originalSize, opacity: 1 });
+        });
+        nodesRef.current.update(updates);
+      }
+      return;
+    }
+
+    const q = query.toLowerCase();
+    const matches = [];
+    const updates = [];
+    nodesRef.current.forEach(n => {
+      const isMatch = n.label.toLowerCase().includes(q);
+      if (isMatch) matches.push({ id: n.id, label: n.label, color: n._originalColor });
+      updates.push({
+        id: n.id,
+        color: isMatch ? n._originalColor : '#3a3a4a',
+        size: isMatch ? Math.max(n._originalSize, 18) : Math.max(n._originalSize * 0.6, 4),
+        opacity: isMatch ? 1 : 0.3,
+      });
+    });
+    nodesRef.current.update(updates);
+    setSearchResults(matches);
+  };
+
+  const focusNode = (nodeId) => {
+    setSelectedNode(nodeId);
+    if (networkRef.current) {
+      networkRef.current.focus(nodeId, { scale: 1.5, animation: { duration: 600, easingFunction: 'easeInOutQuad' } });
+      networkRef.current.selectNodes([nodeId]);
+    }
+  };
+
   const FILTER_OPTIONS = [
     { value: 'all',           label: 'All Accounts' },
     { value: 'critical_high', label: 'Critical + High Only' },
@@ -109,6 +159,49 @@ export default function NetworkGraph() {
             ))}
           </select>
         </div>
+      </div>
+
+      {/* Search bar */}
+      <div className="network-search-bar">
+        <div className="alert-search">
+          <Icon name="search" size={18} />
+          <input
+            type="text"
+            placeholder="Search nodes by account name..."
+            value={searchQuery}
+            onChange={e => handleSearch(e.target.value)}
+          />
+          {searchQuery && (
+            <button className="alert-search-clear" onClick={() => handleSearch('')}>
+              <Icon name="close" size={16} />
+            </button>
+          )}
+        </div>
+        {searchResults.length > 0 && (
+          <div className="network-search-results">
+            <span className="network-search-count">{searchResults.length} found</span>
+            <div className="network-search-chips">
+              {searchResults.slice(0, 12).map(r => (
+                <button
+                  key={r.id}
+                  className={`network-search-chip ${selectedNode === r.id ? 'active' : ''}`}
+                  onClick={() => focusNode(r.id)}
+                >
+                  <span className="network-chip-dot" style={{ background: r.color }} />
+                  {r.label}
+                </button>
+              ))}
+              {searchResults.length > 12 && (
+                <span className="network-search-more">+{searchResults.length - 12} more</span>
+              )}
+            </div>
+          </div>
+        )}
+        {searchQuery && searchResults.length === 0 && (
+          <p style={{ margin: '0.4rem 0 0', fontSize: '0.82rem', color: 'var(--text-muted)' }}>
+            No nodes match "{searchQuery}"
+          </p>
+        )}
       </div>
 
       {showGraph && (
