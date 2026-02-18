@@ -1,4 +1,4 @@
-const BASE = '';
+const BASE = 'https://upibackend.mizanur.in';
 
 export async function fetchDashboardData() {
   const res = await fetch(`${BASE}/api/dashboard`);
