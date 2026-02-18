@@ -24,7 +24,6 @@ Thumbs.db
 # =========================
 # Streamlit / PyVis
 # =========================
-*.html
 .streamlit/
 
 # =========================
@@ -50,3 +49,4 @@ ppt/*.pptx
 #  Node Modules (if we using Node for frontend)
 #--------------------------
 node_modules/
+dist/
