@@ -5,7 +5,6 @@ import RiskAnalysis from './components/RiskAnalysis';
 import MLInsights from './components/MLInsights';
 import NetworkGraph from './components/NetworkGraph';
 import TimelineTab from './components/TimelineTab';
-// import Alerts from './components/Alerts';
 import RealTimeAPI from './components/RealTimeAPI';
 import About from './components/About';
 import Icon from './components/Icon';
@@ -17,7 +16,6 @@ const TABS = [
   { id: 'ml',       label: 'ML Insights',     icon: 'psychology' },
   { id: 'network',  label: 'Network Graph',   icon: 'hub' },
   { id: 'timeline', label: 'Timeline',        icon: 'schedule' },
-  // { id: 'alerts',   label: 'Alerts',          icon: 'notifications_active' },
   { id: 'api',      label: 'Real-Time API',   icon: 'bolt' },
   { id: 'about',    label: 'About',           icon: 'menu_book' },
 ];

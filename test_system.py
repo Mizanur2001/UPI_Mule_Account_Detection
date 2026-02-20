@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-"""Quick verification that enhanced system works"""
 
 print("Testing enhanced UPI mule detection system...")
 

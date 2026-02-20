@@ -4,7 +4,6 @@ import Icon from './Icon';
 
 const COLOR_MAP = { CRITICAL: '#ef4444', HIGH: '#f97316', MEDIUM: '#eab308', LOW: '#22c55e' };
 const DARK_LAYOUT = {
-  // template: 'plotly_white', // Default is fine
   paper_bgcolor: 'rgba(0,0,0,0)',
   plot_bgcolor: 'rgba(0,0,0,0)',
   margin: { l: 20, r: 20, t: 30, b: 20 },
@@ -15,7 +14,6 @@ export default function CommandCenter({ data }) {
   const s = data.summary;
   const scores = data.scores;
 
-  /* ── Histogram traces (one per risk level) ── */
   const levels = ['CRITICAL', 'HIGH', 'MEDIUM', 'LOW'];
   const histTraces = levels.map(lvl => ({
     type: 'histogram',
@@ -25,7 +23,6 @@ export default function CommandCenter({ data }) {
     nbinsx: 20,
   }));
 
-  /* ── Donut chart ── */
   const pieTrace = {
     type: 'pie',
     values: [s.critical_count, s.high_count, s.medium_count, s.low_count],
@@ -35,7 +32,6 @@ export default function CommandCenter({ data }) {
     textinfo: 'percent+value',
   };
 
-  /* ── Heatmap (top 20) ── */
   const top20 = scores.slice(0, 20);
   const heatZ = top20.map(sc => [
     sc.behavioral_score, sc.graph_score, sc.device_score,
@@ -46,7 +42,6 @@ export default function CommandCenter({ data }) {
 
   return (
     <div>
-      {/* Metric cards */}
       <div className="metric-grid cols-5">
         <div className="metric-card critical">
           <div className="value">{s.critical_count}</div>
@@ -70,7 +65,6 @@ export default function CommandCenter({ data }) {
         </div>
       </div>
 
-      {/* Charts row */}
       <div className="grid-row cols-3-2">
         <div className="chart-container">
           <h3>Risk Score Distribution</h3>
@@ -103,7 +97,6 @@ export default function CommandCenter({ data }) {
         </div>
       </div>
 
-      {/* Signal heatmap */}
       <div className="chart-container" style={{ marginTop: '1.2rem' }}>
         <h3>Detection Signal Heatmap — Top 20 Risky Accounts</h3>
         <Plot
@@ -121,26 +114,6 @@ export default function CommandCenter({ data }) {
         />
       </div>
 
-      {/* Key stats */}
-      {/* <h3 style={{ marginTop: '1.5rem' }}>Key Statistics</h3>
-      <div className="metric-grid cols-4" style={{ marginTop: '0.6rem' }}>
-        <div className="metric-card info">
-          <div className="value">{s.total_accounts}</div>
-          <div className="label">Total Accounts</div>
-        </div>
-        <div className="metric-card info">
-          <div className="value">{s.total_transactions}</div>
-          <div className="label">Total Transactions</div>
-        </div>
-        <div className="metric-card info">
-          <div className="value">{s.max_score}</div>
-          <div className="label">Max Risk Score</div>
-        </div>
-        <div className="metric-card info">
-          <div className="value">{s.median_score}</div>
-          <div className="label">Median Score</div>
-        </div>
-      </div> */}
     </div>
   );
 }

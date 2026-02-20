@@ -4,7 +4,6 @@ import { fetchTimelineData } from '../api';
 import Icon from './Icon';
 
 const DARK_LAYOUT = {
-  // template: 'plotly_white',
   paper_bgcolor: 'rgba(0,0,0,0)',
   plot_bgcolor: 'rgba(0,0,0,0)',
   margin: { l: 50, r: 50, t: 40, b: 50 },
@@ -33,7 +32,6 @@ export default function TimelineTab() {
 
   const { transactions, hourly, heatmap } = timeline;
 
-  /* ── Volume over time (dual axis) ── */
   const volumeTraces = [
     {
       type: 'bar',
@@ -52,7 +50,6 @@ export default function TimelineTab() {
     },
   ];
 
-  /* ── Risk-level scatter ── */
   const riskScatterTraces = ['CRITICAL', 'HIGH', 'MEDIUM', 'LOW', 'UNKNOWN'].map(lvl => {
     const pts = transactions.filter(t => t.sender_risk === lvl);
     return {
@@ -69,7 +66,6 @@ export default function TimelineTab() {
     };
   }).filter(t => t.x.length > 0);
 
-  /* ── Hour-of-day heatmap ── */
   const heatmapTrace = {
     type: 'heatmap',
     z: heatmap.values,

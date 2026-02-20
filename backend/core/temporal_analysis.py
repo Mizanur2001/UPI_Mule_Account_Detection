@@ -1,26 +1,17 @@
-"""
-Temporal Analysis Module - Time-based anomaly detection for UPI mule accounts.
-Detects suspicious temporal patterns like burst transactions, odd-hour activity,
-and velocity spikes that indicate automated or coordinated fraud.
-"""
 
 import pandas as pd
 import numpy as np
 from datetime import datetime, timedelta
 
 
+# Detects burst, night, velocity and automation timing patterns
 def temporal_risk(account_id: str, account_txns: pd.DataFrame) -> tuple:
-    """
-    Analyze time-based patterns for mule detection.
-    Returns (score: int, reasons: list[str])
-    """
     score = 0
     reasons = []
 
     if len(account_txns) < 2:
         return 0, []
 
-    # Parse timestamps if present
     if "timestamp" not in account_txns.columns:
         return 0, []
 
@@ -32,13 +23,11 @@ def temporal_risk(account_id: str, account_txns: pd.DataFrame) -> tuple:
         if len(txns) < 2:
             return 0, []
 
-        # ── 1. BURST DETECTION ──────────────────────────────────────────
-        # Multiple transactions in very short time windows (< 5 minutes)
         time_diffs = txns["timestamp"].diff().dt.total_seconds().dropna()
 
         if len(time_diffs) > 0:
-            burst_count = (time_diffs < 300).sum()  # Under 5 min
-            rapid_count = (time_diffs < 60).sum()    # Under 1 min
+            burst_count = (time_diffs < 300).sum()
+            rapid_count = (time_diffs < 60).sum()
 
             if rapid_count >= 3:
                 score += 35
@@ -51,8 +40,6 @@ def temporal_risk(account_id: str, account_txns: pd.DataFrame) -> tuple:
                     f"Burst pattern: {burst_count} transactions within 5-minute windows"
                 )
 
-        # ── 2. ODD-HOUR ACTIVITY ────────────────────────────────────────
-        # Transactions between 12 AM - 5 AM (suspicious for P2P)
         hours = txns["timestamp"].dt.hour
         night_txns = ((hours >= 0) & (hours < 5)).sum()
         night_pct = night_txns / len(txns) if len(txns) > 0 else 0
@@ -69,12 +56,9 @@ def temporal_risk(account_id: str, account_txns: pd.DataFrame) -> tuple:
                 f"Suspicious night activity: {night_txns} transactions between 12AM-5AM"
             )
 
-        # ── 3. VELOCITY SPIKE DETECTION ─────────────────────────────────
-        # Compare recent vs historical activity rate
         if len(txns) >= 4:
             total_span = (txns["timestamp"].max() - txns["timestamp"].min()).total_seconds()
             if total_span > 0:
-                # Split into first half and second half
                 mid_idx = len(txns) // 2
                 first_half = txns.iloc[:mid_idx]
                 second_half = txns.iloc[mid_idx:]
@@ -83,8 +67,8 @@ def temporal_risk(account_id: str, account_txns: pd.DataFrame) -> tuple:
                 span_second = (second_half["timestamp"].max() - second_half["timestamp"].min()).total_seconds()
 
                 if span_first > 0 and span_second > 0:
-                    rate_first = len(first_half) / (span_first / 3600)   # txn/hour
-                    rate_second = len(second_half) / (span_second / 3600)  # txn/hour
+                    rate_first = len(first_half) / (span_first / 3600)
+                    rate_second = len(second_half) / (span_second / 3600)
 
                     if rate_second > rate_first * 3 and rate_second > 2:
                         score += 25
@@ -93,7 +77,6 @@ def temporal_risk(account_id: str, account_txns: pd.DataFrame) -> tuple:
                             f"{rate_second:.1f} txns/hr ({rate_second/max(rate_first,0.1):.1f}x increase)"
                         )
 
-        # ── 4. WEEKEND/HOLIDAY CONCENTRATION ────────────────────────────
         weekday_counts = txns["timestamp"].dt.dayofweek
         weekend_txns = (weekday_counts >= 5).sum()
         weekend_pct = weekend_txns / len(txns) if len(txns) > 0 else 0
@@ -104,12 +87,11 @@ def temporal_risk(account_id: str, account_txns: pd.DataFrame) -> tuple:
                 f"Heavy weekend concentration: {weekend_pct:.0%} of transactions on weekends"
             )
 
-        # ── 5. UNIFORM TIME SPACING (Bot signature) ────────────────────
         if len(time_diffs) >= 4:
             std_dev = time_diffs.std()
             mean_diff = time_diffs.mean()
             if mean_diff > 0:
-                cv = std_dev / mean_diff  # Coefficient of variation
+                cv = std_dev / mean_diff
                 if cv < 0.15 and mean_diff < 600:
                     score += 30
                     reasons.append(
@@ -128,11 +110,8 @@ def temporal_risk(account_id: str, account_txns: pd.DataFrame) -> tuple:
     return min(int(score), 100), reasons
 
 
+# Calculates average and peak transaction velocity per hour
 def compute_transaction_velocity(account_id: str, txns: pd.DataFrame, window_hours: int = 1) -> dict:
-    """
-    Compute velocity metrics for an account within a sliding window.
-    Used for real-time monitoring dashboards.
-    """
     account_txns = txns[
         (txns["sender"] == account_id) | (txns["receiver"] == account_id)
     ].copy()
@@ -152,7 +131,6 @@ def compute_transaction_velocity(account_id: str, txns: pd.DataFrame, window_hou
 
     avg_velocity = len(account_txns) / max(total_span_hours, 0.01)
 
-    # Peak velocity in sliding window
     peak_velocity = 0
     window = pd.Timedelta(hours=window_hours)
     for i, row in account_txns.iterrows():

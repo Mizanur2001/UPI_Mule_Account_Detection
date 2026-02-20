@@ -45,22 +45,6 @@ export default function Sidebar({ data, onToggle }) {
       <span className="caption"><Icon name="circle" size={12} color="#eab308" /> {s.medium_count} MEDIUM · <Icon name="circle" size={12} color="#22c55e" /> {s.low_count} LOW</span>
 
       <div className="divider" />
-{/* 
-      <div className="section-label">Detection Signals</div>
-      <table>
-        <thead>
-          <tr><th>Signal</th><th>Weight</th><th>Status</th></tr>
-        </thead>
-        <tbody>
-          {signals.map(sig => (
-            <tr key={sig.name}>
-              <td>{sig.name}</td>
-              <td>{sig.weight}</td>
-              <td>{sig.status}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table> */}
 
       <div className="version-label">UPI Mule Detection v2.0 · CSIC 1.0</div>
     </aside>

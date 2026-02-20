@@ -52,7 +52,6 @@ export default function Alerts({ data }) {
     <div>
       <h2><Icon name="notifications_active" size={24} style={{ marginRight: 8 }} />Alert Management Console</h2>
 
-      {/* Summary counters */}
       <div className="alert-summary-bar">
         <div className="alert-summary-stat critical">
           <Icon name="error" size={20} />
@@ -77,7 +76,6 @@ export default function Alerts({ data }) {
         </div>
       </div>
 
-      {/* Search + filter bar */}
       <div className="alert-toolbar">
         <div className="alert-search">
           <Icon name="search" size={18} />
@@ -107,13 +105,11 @@ export default function Alerts({ data }) {
         </div>
       </div>
 
-      {/* Results info */}
       <p style={{ margin: '0.6rem 0 0.4rem', color: 'var(--text-muted)', fontSize: '0.82rem' }}>
         Showing <strong>{alerts.length}</strong> of {allAlerts.length} alerts
         {searchQuery && <> matching “<em>{searchQuery}</em>”</>}
       </p>
 
-      {/* Alert cards */}
       {alerts.length === 0 && searchQuery && (
         <div className="info-box info">
           <Icon name="search_off" size={16} style={{ marginRight: 6 }} /> No alerts match your search.
@@ -176,7 +172,6 @@ export default function Alerts({ data }) {
         </div>
       ))}
 
-      {/* Report generation */}
       <hr className="divider" />
       <h2><Icon name="assignment" size={24} style={{ marginRight: 8 }} />Generate Investigation Report</h2>
 

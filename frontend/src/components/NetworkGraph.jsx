@@ -86,14 +86,12 @@ export default function NetworkGraph() {
     };
   }, [graphData]);
 
-  // Search handler
   const handleSearch = (query) => {
     setSearchQuery(query);
     setSelectedNode(null);
 
     if (!nodesRef.current || !query.trim()) {
       setSearchResults([]);
-      // Reset all nodes to original appearance
       if (nodesRef.current) {
         const updates = [];
         nodesRef.current.forEach(n => {
@@ -161,7 +159,6 @@ export default function NetworkGraph() {
         </div>
       </div>
 
-      {/* Search bar */}
       <div className="network-search-bar">
         <div className="alert-search">
           <Icon name="search" size={18} />

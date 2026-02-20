@@ -1,18 +1,3 @@
-"""
-ML-based Anomaly Detection Module for UPI Mule Account Detection.
-Uses Isolation Forest (unsupervised) + statistical Z-score outlier detection 
-to identify anomalous transaction behavior without requiring labeled training data.
-
-This is a key innovation: works on zero labeled fraud data, making it 
-deployable from day-one in any UPI ecosystem.
-
-Features:
-  - Custom Isolation Forest (pure NumPy, no scikit-learn)
-  - Z-score ensemble (70/30 weighting)
-  - Model persistence (pickle-based save/load)
-  - Feature importance via permutation-based scoring
-  - SHAP-like local explanations for individual accounts
-"""
 
 import os
 import json
@@ -29,13 +14,6 @@ META_PATH = os.path.join(MODEL_DIR, "model_meta.json")
 
 
 class IsolationForestLite:
-    """
-    Lightweight Isolation Forest implementation for anomaly detection.
-    No scikit-learn dependency — pure NumPy for production portability.
-    
-    Theory: Anomalies are "few and different", so they are isolated 
-    earlier in random binary trees. Normal points require more splits.
-    """
 
     def __init__(self, n_trees: int = 100, max_samples: int = 256, random_state: int = 42):
         self.n_trees = n_trees
@@ -44,6 +22,7 @@ class IsolationForestLite:
         self.trees = []
         self._fitted = False
 
+    # Recursively partitions data into an isolation tree
     def _build_tree(self, X: np.ndarray, depth: int = 0, max_depth: int = 10):
         n_samples, n_features = X.shape
         if n_samples <= 1 or depth >= max_depth:
@@ -67,8 +46,8 @@ class IsolationForestLite:
             "right": self._build_tree(X[right_mask], depth + 1, max_depth),
         }
 
+    # Trains the forest by building isolation trees
     def fit(self, X: np.ndarray):
-        """Fit the isolation forest on feature matrix X."""
         n = min(len(X), self.max_samples)
         max_depth = int(np.ceil(np.log2(max(n, 2))))
 
@@ -91,15 +70,12 @@ class IsolationForestLite:
 
     @staticmethod
     def _c(n: int) -> float:
-        """Average path length of unsuccessful search in BST."""
         if n <= 1:
             return 0
         return 2.0 * (np.log(n - 1) + 0.5772156649) - 2.0 * (n - 1) / n
 
+    # Computes anomaly scores via average path lengths
     def anomaly_score(self, X: np.ndarray) -> np.ndarray:
-        """
-        Compute anomaly scores. Higher = more anomalous (0 to 1 scale).
-        """
         if not self._fitted:
             raise RuntimeError("Must call fit() first")
 
@@ -113,7 +89,6 @@ class IsolationForestLite:
         return scores
 
     def save(self, path: str):
-        """Persist the fitted model to disk."""
         with open(path, "wb") as f:
             pickle.dump({
                 "trees": self.trees,
@@ -125,7 +100,6 @@ class IsolationForestLite:
 
     @classmethod
     def load(cls, path: str) -> "IsolationForestLite":
-        """Load a previously saved model."""
         with open(path, "rb") as f:
             data = pickle.load(f)
         model = cls(n_trees=data["n_trees"], max_samples=data["max_samples"])
@@ -135,13 +109,9 @@ class IsolationForestLite:
         return model
 
 
+# Permutation-based feature importance for anomaly detection
 def compute_feature_importance(model: IsolationForestLite, X: np.ndarray,
                                 feature_names: list) -> dict:
-    """
-    Compute permutation-based feature importance.
-    Measures how much each feature contributes to anomaly detection
-    by shuffling it and observing score changes.
-    """
     baseline_scores = model.anomaly_score(X)
     importance = {}
 
@@ -150,28 +120,22 @@ def compute_feature_importance(model: IsolationForestLite, X: np.ndarray,
         X_perm = X.copy()
         X_perm[:, i] = rng.permutation(X_perm[:, i])
         perm_scores = model.anomaly_score(X_perm)
-        # Importance = mean absolute change in anomaly score
         importance[name] = round(float(np.mean(np.abs(baseline_scores - perm_scores))), 4)
 
-    # Normalize to percentages
     total = sum(importance.values()) or 1
     importance = {k: round(v / total * 100, 1) for k, v in importance.items()}
     return dict(sorted(importance.items(), key=lambda x: x[1], reverse=True))
 
 
+# Explains which features drive an account's anomaly score
 def explain_account(model: IsolationForestLite, X: np.ndarray,
                      account_idx: int, feature_names: list) -> list:
-    """
-    SHAP-like local explanation for a single account.
-    Returns top contributing features for this account's anomaly score.
-    """
     baseline = float(model.anomaly_score(X[account_idx:account_idx+1])[0])
     contributions = []
 
     rng = np.random.RandomState(42)
     for i, name in enumerate(feature_names):
         X_mod = X[account_idx:account_idx+1].copy()
-        # Replace with median (baseline value)
         X_mod[0, i] = np.median(X[:, i])
         modified_score = float(model.anomaly_score(X_mod)[0])
         delta = baseline - modified_score
@@ -182,15 +146,12 @@ def explain_account(model: IsolationForestLite, X: np.ndarray,
         })
 
     contributions.sort(key=lambda x: abs(x["contribution"]), reverse=True)
-    return contributions[:5]  # Top 5 contributors
+    return contributions[:5]
 
 
+# Extracts 17 ML features for a single account
 def extract_account_features(account_id: str, txns: pd.DataFrame,
                               accounts: pd.DataFrame, devices: pd.DataFrame) -> dict:
-    """
-    Extract feature vector for one account from transaction data.
-    Features designed to capture mule-like behavioral signatures.
-    """
     acc_txns = txns[(txns["sender"] == account_id) | (txns["receiver"] == account_id)]
     sent = txns[txns["sender"] == account_id]
     recv = txns[txns["receiver"] == account_id]
@@ -205,28 +166,22 @@ def extract_account_features(account_id: str, txns: pd.DataFrame,
     max_amount = acc_txns["amount"].max() if total_txns > 0 else 0
     std_amount = acc_txns["amount"].std() if total_txns > 1 else 0
 
-    # Unique counterparties
     unique_senders = recv["sender"].nunique() if total_recv > 0 else 0
     unique_receivers = sent["receiver"].nunique() if total_sent > 0 else 0
 
-    # Pass-through ratio
     if amount_recv > 0:
         pass_through = amount_sent / amount_recv
     else:
         pass_through = 0 if amount_sent == 0 else 2.0
 
-    # In/out degree ratio
     degree_ratio = unique_senders / max(unique_receivers, 1)
 
-    # Account age
     acc_meta = accounts[accounts["account_id"] == account_id]
     age_days = acc_meta["account_age_days"].values[0] if len(acc_meta) > 0 else 365
 
-    # Device count
     acc_devices = devices[devices["account_id"] == account_id]
     n_devices = acc_devices["device_id"].nunique() if len(acc_devices) > 0 else 0
 
-    # Shared device accounts
     if len(acc_devices) > 0:
         device_ids = acc_devices["device_id"].unique()
         shared_accounts = devices[devices["device_id"].isin(device_ids)]["account_id"].nunique() - 1
@@ -254,17 +209,10 @@ def extract_account_features(account_id: str, txns: pd.DataFrame,
     }
 
 
+# Runs full ML pipeline: features, train/load, score, explain
 def ml_anomaly_detection(account_ids: list, txns: pd.DataFrame,
                           accounts: pd.DataFrame, devices: pd.DataFrame,
                           force_retrain: bool = False) -> dict:
-    """
-    Run ML-based anomaly detection across all accounts.
-    Supports model persistence — loads cached model if available.
-    Returns dict {account_id: {"anomaly_score": float, "anomaly_label": str,
-                                "features": dict, "explanations": list,
-                                "feature_importance": dict}}
-    """
-    # Extract features for all accounts
     feature_list = []
     valid_ids = []
 
@@ -276,18 +224,15 @@ def ml_anomaly_detection(account_ids: list, txns: pd.DataFrame,
     if len(feature_list) == 0:
         return {}
 
-    # Build feature matrix
     feature_names = list(feature_list[0].keys())
     X = np.array([[f[k] for k in feature_names] for f in feature_list], dtype=np.float64)
 
-    # Normalize features (min-max scaling)
     X_min = X.min(axis=0)
     X_max = X.max(axis=0)
     X_range = X_max - X_min
-    X_range[X_range == 0] = 1  # Avoid division by zero
+    X_range[X_range == 0] = 1
     X_norm = (X - X_min) / X_range
 
-    # Load or train Isolation Forest (model persistence)
     iforest = None
     if not force_retrain and os.path.exists(MODEL_PATH):
         try:
@@ -298,9 +243,7 @@ def ml_anomaly_detection(account_ids: list, txns: pd.DataFrame,
     if iforest is None:
         iforest = IsolationForestLite(n_trees=100, max_samples=min(256, len(X)))
         iforest.fit(X_norm)
-        # Save model for persistence
         iforest.save(MODEL_PATH)
-        # Save metadata
         meta = {
             "trained_at": datetime.utcnow().isoformat() + "Z",
             "n_accounts": len(valid_ids),
@@ -313,18 +256,14 @@ def ml_anomaly_detection(account_ids: list, txns: pd.DataFrame,
 
     anomaly_scores = iforest.anomaly_score(X_norm)
 
-    # Compute feature importance (global)
     feat_importance = compute_feature_importance(iforest, X_norm, feature_names)
 
-    # Also compute Z-score based outlier detection
     z_scores = np.abs((X_norm - X_norm.mean(axis=0)) / (X_norm.std(axis=0) + 1e-10))
     z_anomaly = z_scores.mean(axis=1)
     z_normalized = (z_anomaly - z_anomaly.min()) / (z_anomaly.max() - z_anomaly.min() + 1e-10)
 
-    # Ensemble: combine isolation forest + z-score
     ensemble_scores = 0.7 * anomaly_scores + 0.3 * z_normalized
 
-    # Map to 0-100 scale
     min_e, max_e = ensemble_scores.min(), ensemble_scores.max()
     if max_e > min_e:
         scaled_scores = ((ensemble_scores - min_e) / (max_e - min_e)) * 100
@@ -341,7 +280,6 @@ def ml_anomaly_detection(account_ids: list, txns: pd.DataFrame,
         else:
             label = "NORMAL"
 
-        # Per-account explanation (top contributing features)
         explanations = explain_account(iforest, X_norm, i, feature_names)
 
         results[acc_id] = {

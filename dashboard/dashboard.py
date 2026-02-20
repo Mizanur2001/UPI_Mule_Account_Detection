@@ -1,16 +1,3 @@
-"""
-UPI Mule Account Detection — Enhanced Dashboard
-Stage III Prototype · Cyber Security Innovation Challenge (CSIC) 1.0
-
-Features:
- • Interactive Plotly charts (radar, sunburst, heatmap, timeline)
- • Real-time transaction simulation
- • ML anomaly detection visualization
- • Network graph with risk overlay
- • Alert management console
- • Detailed forensic drill-down
- • Auto-generated investigation reports
-"""
 
 import streamlit as st
 import pandas as pd
@@ -22,13 +9,11 @@ from pyvis.network import Network
 import tempfile, os, time, json
 from datetime import datetime
 
-# Backend imports
 from backend.api.score import batch_score_accounts
 from backend.utils.data_loader import load_accounts, load_devices
 from backend.core.graph_analysis import build_transaction_graph
 from backend.core.risk_engine import get_recommended_action
 
-# ─── Page Config ──────────────────────────────────────────────────────
 st.set_page_config(
     page_title="UPI Mule Detection Platform",
     page_icon="🛡️",
@@ -36,7 +21,6 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-# ─── Custom CSS ───────────────────────────────────────────────────────
 st.markdown("""
 <style>
     /* Global theme */
@@ -128,7 +112,6 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# ─── Header ──────────────────────────────────────────────────────────
 st.markdown("""
 <div class="header-bar">
     <h1>🛡️ UPI Mule Account Detection Platform</h1>
@@ -136,7 +119,6 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-# ─── Data Loading ────────────────────────────────────────────────────
 @st.cache_resource(show_spinner="🔄 Loading detection engine...")
 def load_all_resources():
     txns = pd.read_csv("data/transactions.csv")
@@ -151,7 +133,6 @@ def load_all_resources():
 
 txns, accounts, devices, G, unique_accounts, scores = load_all_resources()
 
-# ─── Build scores DataFrame ─────────────────────────────────────────
 scores_df = pd.DataFrame([
     {
         "Account": acc,
@@ -171,7 +152,6 @@ scores_df = pd.DataFrame([
     for acc, r in scores.items()
 ]).sort_values("Risk Score", ascending=False)
 
-# Risk counts
 critical_risk = len(scores_df[scores_df["Risk Level"] == "CRITICAL"])
 high_risk = len(scores_df[scores_df["Risk Level"] == "HIGH"])
 medium_risk = len(scores_df[scores_df["Risk Level"] == "MEDIUM"])
@@ -179,7 +159,6 @@ low_risk = len(scores_df[scores_df["Risk Level"] == "LOW"])
 avg_score = scores_df["Risk Score"].mean()
 total = len(scores_df)
 
-# ─── Sidebar ─────────────────────────────────────────────────────────
 with st.sidebar:
     st.markdown("### 🎛️ Control Panel")
     st.divider()
@@ -210,7 +189,6 @@ with st.sidebar:
     st.divider()
     st.caption("UPI Mule Detection v2.0 · CSIC 1.0")
 
-# ─── Tabs ────────────────────────────────────────────────────────────
 tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8 = st.tabs([
     "📊 Command Center",
     "🎯 Risk Analysis",
@@ -222,11 +200,7 @@ tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8 = st.tabs([
     "📖 About",
 ])
 
-# ══════════════════════════════════════════════════════════════════════
-# TAB 1: COMMAND CENTER
-# ══════════════════════════════════════════════════════════════════════
 with tab1:
-    # Metric cards
     c1, c2, c3, c4, c5 = st.columns(5)
     with c1:
         st.markdown(f"""
@@ -261,7 +235,6 @@ with tab1:
 
     st.markdown("")
 
-    # Charts row
     col_left, col_right = st.columns([3, 2])
 
     with col_left:
@@ -305,7 +278,6 @@ with tab1:
         fig_pie.update_traces(textinfo="percent+value")
         st.plotly_chart(fig_pie, use_container_width=True)
 
-    # Signal heatmap
     st.subheader("Detection Signal Heatmap — Top 20 Risky Accounts")
     top_accounts = scores_df.head(20)
     heatmap_data = top_accounts[["Account", "Behavioral", "Graph", "Device", "Temporal", "ML Anomaly"]].set_index("Account")
@@ -321,7 +293,6 @@ with tab1:
     fig_heat.update_layout(height=450, margin=dict(l=20, r=20, t=30, b=20))
     st.plotly_chart(fig_heat, use_container_width=True)
 
-    # Key stats
     st.subheader("Key Statistics")
     sc1, sc2, sc3, sc4 = st.columns(4)
     with sc1:
@@ -334,13 +305,9 @@ with tab1:
         st.metric("Median Score", int(scores_df["Risk Score"].median()))
 
 
-# ══════════════════════════════════════════════════════════════════════
-# TAB 2: RISK ANALYSIS
-# ══════════════════════════════════════════════════════════════════════
 with tab2:
     st.subheader("🎯 Account Risk Scoring & Investigation")
 
-    # Filters
     fc1, fc2, fc3 = st.columns(3)
     with fc1:
         sel_risk = st.multiselect(
@@ -375,13 +342,12 @@ with tab2:
 
     st.write(f"**Showing {len(filtered)} of {len(scores_df)} accounts**")
 
-    # Display table
     def highlight_risk(val):
         colors = {
-            "CRITICAL": "color: white; background-color: #ff1744; font-weight:700",
-            "HIGH": "color: white; background-color: #ff5722",
-            "MEDIUM": "color: white; background-color: #ff9800",
-            "LOW": "color: white; background-color: #4caf50",
+            "CRITICAL": "background-color: #ff1744; color: white",
+            "HIGH": "background-color: #ff5722; color: white",
+            "MEDIUM": "background-color: #ff9800; color: white",
+            "LOW": "background-color: #4caf50; color: white",
         }
         return colors.get(val, "")
 
@@ -391,7 +357,6 @@ with tab2:
     styled = filtered[display_cols].style.map(highlight_risk, subset=["Risk Level"])
     st.dataframe(styled, use_container_width=True, hide_index=True, height=400)
 
-    # Drill-down
     st.divider()
     st.subheader("🔍 Forensic Drill-Down")
     selected = st.selectbox("Select account", filtered["Account"].tolist(), key="drill")
@@ -399,11 +364,9 @@ with tab2:
     if selected:
         data = scores[selected]
 
-        # Radar chart
         r_col1, r_col2 = st.columns([2, 3])
 
         with r_col1:
-            # Metrics
             st.metric("Risk Score", f"{data['risk_score']}/100")
             risk_color = {"CRITICAL": "🔴", "HIGH": "🟠", "MEDIUM": "🟡", "LOW": "🟢"}.get(data["risk_level"], "⚪")
             st.metric("Risk Level", f"{risk_color} {data['risk_level']}")
@@ -412,7 +375,6 @@ with tab2:
             st.info(f"**Action:** {data.get('recommended_action', 'N/A')}")
 
         with r_col2:
-            # Radar chart for signal breakdown
             categories = ["Behavioral", "Graph", "Device", "Temporal", "ML Anomaly"]
             values = [
                 data.get("behavioral_score", 0),
@@ -442,7 +404,6 @@ with tab2:
             )
             st.plotly_chart(fig_radar, use_container_width=True)
 
-        # Evidence
         st.subheader("📋 Evidence Trail")
         if data["reasons"]:
             for i, reason in enumerate(data["reasons"], 1):
@@ -450,7 +411,6 @@ with tab2:
         else:
             st.success("No risk factors identified — account appears legitimate.")
 
-    # Export
     st.divider()
     csv = filtered.to_csv(index=False)
     st.download_button("📥 Export Results (CSV)", csv,
@@ -458,9 +418,6 @@ with tab2:
                        mime="text/csv")
 
 
-# ══════════════════════════════════════════════════════════════════════
-# TAB 3: ML INSIGHTS
-# ══════════════════════════════════════════════════════════════════════
 with tab3:
     st.subheader("🧠 Machine Learning Anomaly Detection")
     st.markdown("""
@@ -495,7 +452,6 @@ with tab3:
             xaxis_title="Account Index",
             yaxis_title="ML Anomaly Score",
         )
-        # Add threshold lines
         fig_ml.add_hline(y=70, line_dash="dash", line_color="#ff1744",
                          annotation_text="Anomalous Threshold")
         fig_ml.add_hline(y=45, line_dash="dash", line_color="#ff9800",
@@ -517,7 +473,6 @@ with tab3:
         )
         st.plotly_chart(fig_corr, use_container_width=True)
 
-    # Feature importance
     st.subheader("Feature Contribution Analysis")
     signal_avgs = {
         "Behavioral (25%)": scores_df["Behavioral"].mean(),
@@ -546,9 +501,6 @@ with tab3:
     """)
 
 
-# ══════════════════════════════════════════════════════════════════════
-# TAB 4: NETWORK GRAPH
-# ══════════════════════════════════════════════════════════════════════
 with tab4:
     st.subheader("🕸️ Transaction Network Visualization")
 
@@ -599,14 +551,14 @@ with tab4:
                     color=color_map.get(lvl, "#555"),
                     size=size_map.get(lvl, 15),
                     title=tooltip,
-                    font={"color": "white", "size": 10},
+                    font={"color": "#ffffff", "size": 10},
                 )
 
             for _, row in txns.iterrows():
                 s, r = str(row["sender"]), str(row["receiver"])
                 if s in visible_set and r in visible_set:
                     net.add_edge(s, r, value=float(row["amount"]),
-                                 color={"color": "#555", "opacity": 0.6},
+                                 color={"color": "#888888", "opacity": 0.6},
                                  title=f"₹{row['amount']:,.0f}")
 
             with tempfile.NamedTemporaryFile(delete=False, suffix=".html") as tmp:
@@ -626,9 +578,6 @@ with tab4:
     """)
 
 
-# ══════════════════════════════════════════════════════════════════════
-# TAB 5: TIMELINE
-# ══════════════════════════════════════════════════════════════════════
 with tab5:
     st.subheader("⏱️ Transaction Timeline & Temporal Analysis")
 
@@ -637,7 +586,6 @@ with tab5:
         txns_time["timestamp"] = pd.to_datetime(txns_time["timestamp"], errors="coerce")
         txns_time = txns_time.dropna(subset=["timestamp"])
 
-        # Tag risk level for senders
         txns_time["sender_risk"] = txns_time["sender"].map(
             lambda x: scores.get(x, {}).get("risk_level", "UNKNOWN")
         )
@@ -691,7 +639,6 @@ with tab5:
             )
             st.plotly_chart(fig_risk_time, use_container_width=True)
 
-        # Hour-of-day heatmap
         st.subheader("Hour-of-Day Activity Heatmap")
         txns_time["hour_of_day"] = txns_time["timestamp"].dt.hour
         txns_time["day_name"] = txns_time["timestamp"].dt.day_name()
@@ -715,9 +662,6 @@ with tab5:
         st.warning("No timestamp data available in transactions.")
 
 
-# ══════════════════════════════════════════════════════════════════════
-# TAB 6: ALERTS
-# ══════════════════════════════════════════════════════════════════════
 with tab6:
     st.subheader("🚨 Alert Management Console")
 
@@ -751,7 +695,6 @@ with tab6:
     else:
         st.success("✅ No critical or high-risk alerts at this time.")
 
-    # Report generation
     st.divider()
     st.subheader("📋 Generate Investigation Report")
 
@@ -811,9 +754,6 @@ Five independent detection signals (ensemble approach):
                        mime="text/markdown")
 
 
-# ══════════════════════════════════════════════════════════════════════
-# TAB 7: REAL-TIME API
-# ══════════════════════════════════════════════════════════════════════
 with tab7:
     st.subheader("⚡ Real-Time API & Transaction Simulation")
 
@@ -918,7 +858,6 @@ UPI App / Payment Gateway
             st.metric("Risk Score", r_result["risk_score"])
             st.metric("Risk Level", r_result["risk_level"])
 
-    # API docs
     st.divider()
     st.subheader("📋 API Endpoints")
     api_endpoints = pd.DataFrame({
@@ -953,9 +892,6 @@ curl -X POST http://127.0.0.1:8000/simulate \\
     """, language="bash")
 
 
-# ══════════════════════════════════════════════════════════════════════
-# TAB 8: ABOUT / HOW IT WORKS
-# ══════════════════════════════════════════════════════════════════════
 with tab8:
     st.subheader("📖 How the Detection Engine Works")
 

@@ -1,12 +1,6 @@
-/* ═══════════════════════════════════════════════════════════════════
-   UPI Mule Detection Platform — Enhanced React Dashboard CSS
-   Clean Modern Light Theme · Soft Shadows · Elegant UI
-   ═══════════════════════════════════════════════════════════════════ */
 
-/* ─── Google Fonts ────────────────────────────────────────────────── */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap');
 
-/* ─── CSS Custom Properties ───────────────────────────────────────── */
 :root {
   --bg-primary: #f5f6f8;
   --bg-secondary: #fafbfc;
@@ -47,7 +41,6 @@
   --radius-xl: 20px;
 }
 
-/* ─── Reset & Base ────────────────────────────────────────────────── */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 html { scroll-behavior: smooth; }
@@ -62,7 +55,6 @@ body {
 }
 #root { height: 100%; }
 
-/* Soft background gradient */
 body::before {
   content: '';
   position: fixed;
@@ -79,17 +71,14 @@ a:hover { color: var(--accent-indigo); }
 
 ::selection { background: rgba(79, 70, 229, 0.15); color: var(--accent-indigo); }
 
-/* Scrollbar - Hidden but functional */
 ::-webkit-scrollbar { width: 0px; height: 0px; display: none; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: transparent; }
 * { scrollbar-width: none; }
 
-/* ─── App Layout ──────────────────────────────────────────────────── */
 .app-container { display: flex; height: 100vh; overflow: hidden; }
 .app-container.sidebar-collapsed .main-content { margin-left: 0; }
 
-/* ═══════════════════ SIDEBAR ═══════════════════════════════════════ */
 .sidebar {
   width: 280px;
   min-width: 280px;
@@ -105,7 +94,6 @@ a:hover { color: var(--accent-indigo); }
   box-shadow: 1px 0 10px rgba(0,0,0,0.02);
 }
 
-/* Sidebar collapse button (inside sidebar header) */
 .sidebar-collapse-btn {
   margin-left: auto;
   background: none;
@@ -125,7 +113,6 @@ a:hover { color: var(--accent-indigo); }
   border-color: var(--accent-indigo);
 }
 
-/* Floating button to reopen sidebar when collapsed */
 .sidebar-open-btn {
   position: fixed;
   top: 1rem;
@@ -256,7 +243,6 @@ a:hover { color: var(--accent-indigo); }
   padding-top: 1.5rem;
 }
 
-/* ═══════════════════ MAIN CONTENT ═════════════════════════════════ */
 .main-content {
   flex: 1;
   display: flex; flex-direction: column;
@@ -264,7 +250,6 @@ a:hover { color: var(--accent-indigo); }
   padding: 1rem 1.5rem;
 }
 
-/* ─── Header Bar ──────────────────────────────────────────────────── */
 .header-bar {
   background: var(--bg-secondary);
   padding: 1.5rem 2rem;
@@ -288,13 +273,12 @@ a:hover { color: var(--accent-indigo); }
   opacity: 0.9;
 }
 
-/* ─── Tab Bar ─────────────────────────────────────────────────────── */
 .tab-bar {
   display: flex; gap: 0.5rem;
   margin-bottom: 0px; 
   padding-left: 0.5rem;
   overflow-x: auto;
-  padding-bottom: 1px; /* For active border overlap */
+  padding-bottom: 1px; 
 }
 .tab-btn {
   padding: 0.6rem 1.2rem;
@@ -323,7 +307,6 @@ a:hover { color: var(--accent-indigo); }
   box-shadow: 0 -2px 10px rgba(0,0,0,0.02);
 }
 
-/* ─── Tab Content ─────────────────────────────────────────────────── */
 .tab-content {
   flex: 1;
   padding: 2rem;
@@ -344,7 +327,6 @@ a:hover { color: var(--accent-indigo); }
   margin: 1.5rem 0 0.8rem; color: var(--text-secondary);
 }
 
-/* ═══════════════════ METRIC CARDS ═════════════════════════════════ */
 .metric-grid { display: grid; gap: 1.2rem; }
 .metric-grid.cols-5 { grid-template-columns: repeat(5, 1fr); }
 .metric-grid.cols-4 { grid-template-columns: repeat(4, 1fr); }
@@ -394,7 +376,6 @@ a:hover { color: var(--accent-indigo); }
   text-transform: uppercase; letter-spacing: 0.8px;
 }
 
-/* ═══════════════════ GRID LAYOUTS ═════════════════════════════════ */
 .grid-row { display: grid; gap: 1.5rem; margin-top: 1.5rem; }
 .grid-row.cols-2   { grid-template-columns: 1fr 1fr; }
 .grid-row.cols-3   { grid-template-columns: 1fr 1fr 1fr; }
@@ -402,7 +383,6 @@ a:hover { color: var(--accent-indigo); }
 .grid-row.cols-3-2 { grid-template-columns: 3fr 2fr; }
 .grid-row.cols-2-3 { grid-template-columns: 2fr 3fr; }
 
-/* ═══════════════════ CHARTS ══════════════════════════════════════ */
 .chart-container {
   background: white;
   border-radius: var(--radius-lg);
@@ -422,7 +402,6 @@ a:hover { color: var(--accent-indigo); }
   border-bottom: 1px solid var(--border-subtle);
 }
 
-/* ═══════════════════ DATA TABLE ══════════════════════════════════ */
 .data-table-wrapper {
   overflow-x: auto; max-height: 450px; overflow-y: auto;
   border-radius: var(--radius-md);
@@ -452,7 +431,6 @@ a:hover { color: var(--accent-indigo); }
 .data-table tbody tr { transition: background var(--transition-fast); }
 .data-table tbody tr:hover { background: #f9fafb; }
 
-/* Risk level badges */
 .risk-badge {
   display: inline-block;
   padding: 4px 12px; border-radius: 20px;
@@ -473,7 +451,6 @@ a:hover { color: var(--accent-indigo); }
   background: #f0f9f4; color: #4a9e6a; border: 1px solid #b8e6cc;
 }
 
-/* ═══════════════════ FORM CONTROLS ══════════════════════════════ */
 .form-group { display: flex; flex-direction: column; gap: 0.5rem; }
 .form-group label {
   font-size: 0.85rem; color: var(--text-secondary);
@@ -526,7 +503,6 @@ input[type="checkbox"] {
   color: var(--accent-indigo);
 }
 
-/* ═══════════════════ BUTTONS ════════════════════════════════════ */
 .btn {
   padding: 0.7rem 1.5rem; border: none;
   border-radius: var(--radius-sm);
@@ -556,7 +532,6 @@ input[type="checkbox"] {
 .btn-block { width: 100%; }
 .btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none !important; }
 
-/* ═══════════════════ EVIDENCE PANEL ═════════════════════════════ */
 .evidence-item {
   background: #f9fafb;
   border-left: 4px solid var(--high);
@@ -568,7 +543,6 @@ input[type="checkbox"] {
   border-left-width: 4px;
 }
 
-/* ═══════════════════ FORENSIC DRILL-DOWN PANEL ══════════════════ */
 .forensic-panel {
   background: var(--bg-card);
   border: 1px solid var(--border-subtle);
@@ -579,7 +553,6 @@ input[type="checkbox"] {
   margin-top: 1rem;
 }
 
-/* Selector bar */
 .forensic-selector {
   display: flex;
   align-items: center;
@@ -604,7 +577,6 @@ input[type="checkbox"] {
   min-width: 280px;
 }
 
-/* Status chip */
 .forensic-status-chip {
   display: flex;
   align-items: center;
@@ -638,7 +610,6 @@ input[type="checkbox"] {
   border: 1px solid var(--low);
 }
 
-/* Summary bar */
 .forensic-summary-bar {
   display: flex;
   align-items: center;
@@ -679,7 +650,6 @@ input[type="checkbox"] {
   flex-shrink: 0;
 }
 
-/* Action box */
 .forensic-action-box {
   display: flex;
   align-items: center;
@@ -737,7 +707,6 @@ input[type="checkbox"] {
   color: var(--text-primary);
 }
 
-/* Body: signals + radar */
 .forensic-body {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -764,7 +733,6 @@ input[type="checkbox"] {
   flex-direction: column;
 }
 
-/* Signal breakdown rows */
 .forensic-signal-grid {
   display: flex;
   flex-direction: column;
@@ -840,7 +808,6 @@ input[type="checkbox"] {
 .forensic-signal-score.medium { color: var(--medium); }
 .forensic-signal-score.low { color: var(--low); }
 
-/* Evidence trail */
 .forensic-evidence {
   padding: 1.2rem 1.5rem;
 }
@@ -886,7 +853,6 @@ input[type="checkbox"] {
   align-items: flex-start;
 }
 
-/* Forensic panel responsive */
 @media (max-width: 900px) {
   .forensic-body {
     grid-template-columns: 1fr;
@@ -908,7 +874,6 @@ input[type="checkbox"] {
   }
 }
 
-/* ─── Forensic dark mode overrides ─────────────────────────────── */
 [data-theme="dark"] .forensic-panel {
   background: #1a1d27;
   border-color: #2d3148;
@@ -947,7 +912,6 @@ input[type="checkbox"] {
   border-color: var(--high);
 }
 
-/* ═══════════════════ EXPANDER / ACCORDION ════════════════════════ */
 .expander {
   background: white;
   border: 1px solid var(--border-subtle);
@@ -974,7 +938,6 @@ input[type="checkbox"] {
   to   { opacity: 1; transform: translateY(0); }
 }
 
-/* ═══════════════════ INFO / ALERT BOXES ═════════════════════════ */
 .info-box {
   padding: 1rem 1.2rem; border-radius: var(--radius-md);
   font-size: 0.95rem; margin: 0.8rem 0;
@@ -993,7 +956,6 @@ input[type="checkbox"] {
   background: #fef2f2; color: #991b1b; border-color: #fecaca;
 }
 
-/* ═══════════════════ CODE / JSON ═════════════════════════════════ */
 .code-block {
   background: #1e293b;
   border-radius: var(--radius-md);
@@ -1020,7 +982,6 @@ input[type="checkbox"] {
   margin: 1.5rem 0;
 }
 
-/* ═══════════════════ LOADING SCREEN ═════════════════════════════ */
 .loading-screen {
   display: flex; flex-direction: column;
   align-items: center; justify-content: center;
@@ -1037,7 +998,6 @@ input[type="checkbox"] {
 }
 @keyframes spin { to { transform: rotate(360deg); } }
 
-/* ═══════════════════ NETWORK GRAPH ══════════════════════════════ */
 .network-container {
   background: #ffffff;
   border: 1px solid var(--border-subtle);
@@ -1046,7 +1006,6 @@ input[type="checkbox"] {
   box-shadow: var(--shadow-card);
 }
 
-/* ═══════════════════ ABOUT CONTENT ══════════════════════════════ */
 .about-content h2 { margin-top: 2rem; color: var(--text-primary); }
 .about-content h3 { color: var(--text-secondary); }
 .about-content p { color: var(--text-secondary); line-height: 1.7; }
@@ -1059,14 +1018,12 @@ input[type="checkbox"] {
 .about-content th { background: #f9fafb; padding: 0.8rem; text-align: left; }
 .about-content td { padding: 0.8rem; border-top: 1px solid var(--border-subtle); }
 
-/* ═══════════════════ ANIMATIONS ═════════════════════════════════ */
 .tab-content > div { animation: fadeInUp 0.4s ease-out; }
 @keyframes fadeInUp {
   from { opacity: 0; transform: translateY(12px); }
   to   { opacity: 1; transform: translateY(0); }
 }
 
-/* Responsive */
 @media (max-width: 1200px) {
   .metric-grid.cols-5 { grid-template-columns: repeat(3, 1fr); }
   .grid-row.cols-3-2  { grid-template-columns: 1fr; }
@@ -1085,11 +1042,9 @@ input[type="checkbox"] {
   .tab-content { margin: 0 1rem 1rem; padding: 1rem; }
 }
 
-/* Plotly override for white theme */
 .js-plotly-plot .plotly .modebar { right: 5px !important; }
 .js-plotly-plot { border-radius: 8px; overflow: hidden; }
 
-/* ═══════════════════ DARK MODE TOGGLE ═══════════════════════════ */
 .header-bar-top {
   display: flex;
   justify-content: space-between;
@@ -1122,7 +1077,6 @@ input[type="checkbox"] {
   box-shadow: 0 4px 12px rgba(79, 70, 229, 0.25);
 }
 
-/* ═══════════════════ DARK THEME ═════════════════════════════════ */
 [data-theme="dark"] {
   --bg-primary: #0f1117;
   --bg-secondary: #1a1d27;
@@ -1153,7 +1107,6 @@ input[type="checkbox"] {
     radial-gradient(circle at 50% 50%, rgba(6, 182, 212, 0.06) 0%, transparent 70%);
 }
 
-/* Sidebar dark */
 [data-theme="dark"] .sidebar {
   background: #141620;
   border-right-color: #2d3148;
@@ -1192,13 +1145,11 @@ input[type="checkbox"] {
   border-bottom-color: #2d3148;
 }
 
-/* Header dark */
 [data-theme="dark"] .header-bar {
   background: #1a1d27;
   border-color: #2d3148;
 }
 
-/* Tab bar dark */
 [data-theme="dark"] .tab-btn {
   color: #9ca3af;
 }
@@ -1213,13 +1164,11 @@ input[type="checkbox"] {
   border-bottom-color: #1a1d27;
 }
 
-/* Tab content dark */
 [data-theme="dark"] .tab-content {
   background: #1a1d27;
   border-color: #2d3148;
 }
 
-/* Metric cards dark */
 [data-theme="dark"] .metric-card {
   background: #1e2130;
   border-color: #2d3148;
@@ -1229,7 +1178,6 @@ input[type="checkbox"] {
   box-shadow: 0 15px 30px rgba(0, 0, 0, 0.4);
 }
 
-/* Charts dark */
 [data-theme="dark"] .chart-container {
   background: #1e2130;
   border-color: #2d3148;
@@ -1239,7 +1187,6 @@ input[type="checkbox"] {
   border-bottom-color: #2d3148;
 }
 
-/* Data table dark */
 [data-theme="dark"] .data-table-wrapper {
   background: #1e2130;
   border-color: #2d3148;
@@ -1257,7 +1204,6 @@ input[type="checkbox"] {
   background: #252838;
 }
 
-/* Risk badges dark */
 [data-theme="dark"] .risk-badge.CRITICAL {
   background: #2a0f0f; color: #f87171; border-color: #5c1616;
 }
@@ -1271,7 +1217,6 @@ input[type="checkbox"] {
   background: #0f2419; color: #4ade80; border-color: #166534;
 }
 
-/* Form controls dark */
 [data-theme="dark"] select,
 [data-theme="dark"] input[type="number"] {
   background: #1e2130;
@@ -1296,7 +1241,6 @@ input[type="checkbox"] {
   color: #a8a0d0;
 }
 
-/* Evidence dark */
 [data-theme="dark"] .evidence-item {
   background: #1e2130;
   border-color: #2d3148;
@@ -1304,7 +1248,6 @@ input[type="checkbox"] {
   color: #d1d5db;
 }
 
-/* Expander dark */
 [data-theme="dark"] .expander {
   background: #1e2130;
   border-color: #2d3148;
@@ -1320,7 +1263,6 @@ input[type="checkbox"] {
   background: #1e2130;
 }
 
-/* Info boxes dark */
 [data-theme="dark"] .info-box.info {
   background: #0f1a2e; color: #93c5fd; border-color: #1e3a5f;
 }
@@ -1334,7 +1276,6 @@ input[type="checkbox"] {
   background: #2a0f0f; color: #fca5a5; border-color: #5c1616;
 }
 
-/* Code blocks dark (already dark, just ensure consistency) */
 [data-theme="dark"] .code-block {
   background: #0d1117;
   border: 1px solid #2d3148;
@@ -1344,7 +1285,6 @@ input[type="checkbox"] {
   border: 1px solid #2d3148;
 }
 
-/* Loading screen dark */
 [data-theme="dark"] .loading-screen {
   background: #0f1117;
   color: #9ca3af;
@@ -1354,13 +1294,11 @@ input[type="checkbox"] {
   border-top-color: #8b7ec8;
 }
 
-/* Network graph dark */
 [data-theme="dark"] .network-container {
   background: #141620;
   border-color: #2d3148;
 }
 
-/* About content dark */
 [data-theme="dark"] .about-content th {
   background: #252838;
   color: #d1d5db;
@@ -1373,9 +1311,7 @@ input[type="checkbox"] {
   border-color: #2d3148;
 }
 
-/* Buttons in dark mode keep their gradient colors, no override needed */
 
-/* Dark toggle itself in dark mode */
 [data-theme="dark"] .dark-mode-toggle {
   background: #252838;
   color: #e5e7eb;
@@ -1387,16 +1323,13 @@ input[type="checkbox"] {
   color: #fff;
 }
 
-/* Scrollbar for dark mode (visible, subtle) */
 [data-theme="dark"] ::-webkit-scrollbar { width: 6px; height: 6px; display: block; }
 [data-theme="dark"] ::-webkit-scrollbar-track { background: #141620; }
 [data-theme="dark"] ::-webkit-scrollbar-thumb { background: #2d3148; border-radius: 3px; }
 [data-theme="dark"] ::-webkit-scrollbar-thumb:hover { background: #3d4160; }
 
-/* Plotly dark override */
 [data-theme="dark"] .js-plotly-plot .plotly .modebar-btn path { fill: #9ca3af !important; }
 
-/* ═══════════════════ INLINE FORENSIC ROW ════════════════════════ */
 .clickable-row { cursor: pointer; transition: background 0.15s; }
 .clickable-row:hover { background: rgba(99,102,168,0.06) !important; }
 .clickable-row.row-active { background: rgba(99,102,168,0.1) !important; }
@@ -1414,7 +1347,6 @@ input[type="checkbox"] {
   to   { opacity: 1; transform: translateY(0); }
 }
 
-/* Two-column grid: Overview | Radar */
 .inline-forensic-grid {
   display: grid;
   grid-template-columns: 1fr 1.6fr;
@@ -1422,7 +1354,6 @@ input[type="checkbox"] {
   align-items: start;
 }
 
-/* ── Overview card (left) ── */
 .inline-section-title {
   font-size: 0.95rem;
   font-weight: 700;
@@ -1466,20 +1397,17 @@ input[type="checkbox"] {
   color: var(--text-secondary);
 }
 
-/* ── Radar card (right) ── */
 .inline-radar-card {
   display: flex;
   flex-direction: column;
 }
 
-/* Responsive: stack on narrow */
 @media (max-width: 900px) {
   .inline-forensic-grid {
     grid-template-columns: 1fr;
   }
 }
 
-/* ── Dark mode overrides ── */
 [data-theme="dark"] .clickable-row:hover { background: rgba(139,126,200,0.08) !important; }
 [data-theme="dark"] .clickable-row.row-active { background: rgba(139,126,200,0.14) !important; }
 [data-theme="dark"] .inline-forensic { background: #1a1d27; }
@@ -1493,7 +1421,6 @@ input[type="checkbox"] {
 [data-theme="dark"] .inline-overview-body.medium    { border-left-color: var(--medium); }
 [data-theme="dark"] .inline-overview-body.low       { border-left-color: var(--low); }
 
-/* ── Risk table compact ── */
 .risk-table-wrapper { max-height: 520px; }
 .risk-table th,
 .risk-table td { padding: 0.55rem 0.7rem; font-size: 0.82rem; }
@@ -1504,7 +1431,6 @@ input[type="checkbox"] {
   line-height: 1.4;
 }
 
-/* ── Inline overview reasons ── */
 .inline-overview-reasons {
   margin-top: 0.3rem;
   padding-top: 0.4rem;
@@ -1532,9 +1458,7 @@ input[type="checkbox"] {
   background: rgba(212,138,90,0.1);
 }
 
-/* ═══════════════════ ALERT MANAGEMENT STYLES ═══════════════════════ */
 
-/* Summary Bar */
 .alert-summary-bar {
   display: flex;
   gap: 1rem;
@@ -1573,7 +1497,6 @@ input[type="checkbox"] {
   letter-spacing: 0.04em;
 }
 
-/* Toolbar — search + filter */
 .alert-toolbar {
   display: flex;
   gap: 0.75rem;
@@ -1620,7 +1543,6 @@ input[type="checkbox"] {
 }
 .alert-search-clear:hover { color: var(--text-primary); }
 
-/* Filter buttons */
 .alert-filter-group {
   display: flex;
   gap: 0.3rem;
@@ -1654,7 +1576,6 @@ input[type="checkbox"] {
   font-size: 0.72rem;
 }
 
-/* Expander — alert card borders */
 .alert-expander-left {
   display: flex;
   align-items: center;
@@ -1670,7 +1591,6 @@ input[type="checkbox"] {
   font-size: 0.82rem;
 }
 
-/* Detail sections */
 .alert-detail-action {
   display: flex;
   align-items: flex-start;
@@ -1702,7 +1622,6 @@ input[type="checkbox"] {
   font-weight: 500;
 }
 
-/* Evidence list */
 .alert-detail-evidence {
   padding: 0.5rem 0.8rem 0.3rem;
   background: var(--bg-primary);
@@ -1750,7 +1669,6 @@ input[type="checkbox"] {
   font-weight: 700;
 }
 
-/* ═══════════════════ NETWORK GRAPH SEARCH ═══════════════════════ */
 .network-search-bar {
   margin: 0.75rem 0;
 }

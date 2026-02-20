@@ -4,7 +4,6 @@ import { downloadFile } from '../api';
 import Icon from './Icon';
 
 const DARK_LAYOUT = {
-  // template: 'plotly_white',
   paper_bgcolor: 'rgba(0,0,0,0)',
   plot_bgcolor: 'rgba(0,0,0,0)',
   margin: { l: 40, r: 40, t: 40, b: 40 },
@@ -56,7 +55,6 @@ export default function RiskAnalysis({ data }) {
     <div>
       <h2><Icon name="crisis_alert" size={24} style={{ marginRight: 8 }} />Account Risk Scoring &amp; Investigation</h2>
 
-      {/* Filters */}
       <div className="grid-row cols-2" style={{ gap: '1rem', marginBottom: '0.5rem' }}>
         <div className="form-group">
           <label><Icon name="search" size={16} style={{ marginRight: 4 }} />Search Account</label>
@@ -109,7 +107,6 @@ export default function RiskAnalysis({ data }) {
         <strong>Showing {filtered.length} of {data.scores.length} accounts</strong>
       </p>
 
-      {/* Data Table */}
       <div className="data-table-wrapper risk-table-wrapper">
         <table className="data-table risk-table">
           <thead>
@@ -143,7 +140,6 @@ export default function RiskAnalysis({ data }) {
                     <td colSpan={10}>
                       <div className="inline-forensic">
                         <div className="inline-forensic-grid">
-                          {/* Left: Overview card */}
                           <div className="inline-overview-card">
                             <h4 className="inline-section-title">Overview</h4>
                             <div className={`inline-overview-body ${s.risk_level.toLowerCase()}`}>
@@ -176,7 +172,6 @@ export default function RiskAnalysis({ data }) {
                             </div>
                           </div>
 
-                          {/* Right: Spider/Radar chart */}
                           <div className="inline-radar-card">
                             <h4 className="inline-section-title">Signal Breakdown — {s.account}</h4>
                             <Plot
@@ -227,7 +222,6 @@ export default function RiskAnalysis({ data }) {
         </table>
       </div>
 
-      {/* Export */}
       <hr className="divider" />
       <button className="btn btn-download" onClick={handleExport}>
         <Icon name="download" size={18} style={{ marginRight: 6 }} /> Export Results (CSV)

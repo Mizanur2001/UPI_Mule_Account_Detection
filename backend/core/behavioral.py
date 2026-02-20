@@ -1,7 +1,5 @@
+# Scores behavioral mule indicators from transaction patterns
 def behavioral_risk(account_txns, account_meta):
-    """
-    Detects velocity & temporal anomalies with detailed metrics
-    """
     score = 0
     reasons = []
     
@@ -13,14 +11,12 @@ def behavioral_risk(account_txns, account_meta):
     max_amount = account_txns["amount"].max() if txn_count else 0
     total_volume = account_txns["amount"].sum() if txn_count else 0
     
-    # Extract sender and receiver transactions
     sent_txns = account_txns[account_txns["sender"] == account_meta["account_id"]]
     recv_txns = account_txns[account_txns["receiver"] == account_meta["account_id"]]
     
     sent_count = len(sent_txns)
     recv_count = len(recv_txns)
 
-    # VELOCITY DETECTION
     if txn_count >= 10:
         score += 35
         reasons.append(f"Very high transaction velocity ({txn_count} txns)")
@@ -28,20 +24,18 @@ def behavioral_risk(account_txns, account_meta):
         score += 25
         reasons.append(f"High transaction velocity ({txn_count} txns)")
 
-    # ASYMMETRIC FLOW (Classic mule indicator: sends out most of what comes in)
     if recv_count >= 3 and sent_count >= 3:
         inflow = recv_txns["amount"].sum()
         outflow = sent_txns["amount"].sum()
         if inflow > 0:
             pass_through_ratio = outflow / inflow
-            if 0.8 <= pass_through_ratio <= 1.2:  # 80-120% pass-through
+            if 0.8 <= pass_through_ratio <= 1.2:
                 score += 35
                 reasons.append(f"Mule indicator: {pass_through_ratio:.1%} of inflow sent back out")
-            elif pass_through_ratio > 1.2:  # Sends more than received
+            elif pass_through_ratio > 1.2:
                 score += 20
                 reasons.append(f"Outflow exceeds inflow (pass-through ratio: {pass_through_ratio:.1%})")
 
-    # AMOUNT ANOMALIES
     if avg_amount > 5000:
         score += 20
         reasons.append(f"High average transaction amount (₹{avg_amount:,.0f})")
@@ -53,7 +47,6 @@ def behavioral_risk(account_txns, account_meta):
         score += 15
         reasons.append(f"Very large single transaction (₹{max_amount:,.0f})")
 
-    # NEW ACCOUNT WITH RAPID ACTIVITY (Critical for onboarding fraud)
     account_age = account_meta.get("account_age_days", 0)
     if account_age < 7 and txn_count >= 2:
         score += 40
@@ -65,12 +58,10 @@ def behavioral_risk(account_txns, account_meta):
         score += 15
         reasons.append(f"Young account ({account_age} days old) with high velocity")
 
-    # TOTAL VOLUME SPIKE
     if total_volume > 50000:
         score += 20
         reasons.append(f"Large total transaction volume (₹{total_volume:,.0f})")
 
-    # NO RECEIVING TRANSACTIONS (Pure sender is suspicious)
     if recv_count == 0 and sent_count >= 3:
         score += 20
         reasons.append("Account only sends money (no receiving transactions)")

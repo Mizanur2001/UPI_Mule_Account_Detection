@@ -1,23 +1,16 @@
-"""
-Enhanced synthetic data generator with realistic mule account scenarios.
-Includes timestamps, device fingerprints, and multiple fraud typologies
-for Stage III prototype demonstration.
-"""
 
 import pandas as pd
 import numpy as np
 from datetime import datetime, timedelta
 import random
 
-# Reproducibility
 np.random.seed(42)
 random.seed(42)
 
-BASE_TIME = datetime(2026, 2, 10, 8, 0, 0)  # Start date for scenarios
+BASE_TIME = datetime(2026, 2, 10, 8, 0, 0)
 
 
 def _rand_ts(base, hours_range=(0, 48), minute_jitter=30):
-    """Generate a random timestamp near `base`."""
     offset = timedelta(
         hours=np.random.randint(*hours_range),
         minutes=np.random.randint(0, minute_jitter),
@@ -26,28 +19,24 @@ def _rand_ts(base, hours_range=(0, 48), minute_jitter=30):
     return (base + offset).isoformat()
 
 
-# ============================================================================
-# SCENARIO 1: STAR AGGREGATOR MULE (5 sources → 1 collector → distributor)
-# ============================================================================
 def create_star_aggregator_scenario():
     transactions, devices, accounts = [], [], []
 
     customers = [f"customer_{i}@upi" for i in range(1, 6)]
     for cust in customers:
         accounts.append({"account_id": cust, "account_age_days": np.random.randint(100, 500)})
-        devices.append({"account_id": cust, "device_id": f"device_{random.randint(1000, 9999)}"})
+        devices.append({"account_id": cust, "device_id": f"dev_{cust.split('@')[0]}"})
 
     mule = "mule_aggregator@upi"
     accounts.append({"account_id": mule, "account_age_days": 5})
 
-    # 5 customers send to mule — burst pattern
     base = BASE_TIME
     for cust in customers:
         for j in range(2):
             transactions.append({
                 "sender": cust, "receiver": mule,
                 "amount": np.random.randint(2000, 8000),
-                "timestamp": _rand_ts(base, (0, 4), 15),  # All within ~4 hours
+                "timestamp": _rand_ts(base, (0, 4), 15),
             })
 
     total_received = sum(t["amount"] for t in transactions if t["receiver"] == mule)
@@ -68,25 +57,21 @@ def create_star_aggregator_scenario():
             "timestamp": _rand_ts(base, (9, 14)),
         })
         accounts.append({"account_id": sink, "account_age_days": np.random.randint(200, 800)})
-        devices.append({"account_id": sink, "device_id": f"device_{random.randint(1000, 9999)}"})
+        devices.append({"account_id": sink, "device_id": f"dev_{sink.split('@')[0]}"})
 
-    # Same device on mule + distributor
-    devices.append({"account_id": mule, "device_id": "device_mule_001"})
-    devices.append({"account_id": distributor, "device_id": "device_mule_001"})
+    devices.append({"account_id": mule, "device_id": "device_mule_agg_001"})
+    devices.append({"account_id": distributor, "device_id": "device_distributor_001"})
 
     return transactions, accounts, devices
 
 
-# ============================================================================
-# SCENARIO 2: CIRCULAR MULE NETWORK (A→B→C→D→A loop)
-# ============================================================================
 def create_circular_network_scenario():
     transactions, devices, accounts = [], [], []
 
     circle = [f"circle_node_{i}@upi" for i in range(1, 5)]
     for node in circle:
         accounts.append({"account_id": node, "account_age_days": np.random.randint(30, 200)})
-        devices.append({"account_id": node, "device_id": "device_circle_cartel"})
+        devices.append({"account_id": node, "device_id": "device_circle_shared"})
 
     amount = 15000
     base = BASE_TIME + timedelta(hours=2)
@@ -103,16 +88,13 @@ def create_circular_network_scenario():
     return transactions, accounts, devices
 
 
-# ============================================================================
-# SCENARIO 3: CHAIN LAUNDERING  (A→B→C→D→E)
-# ============================================================================
 def create_chain_laundering_scenario():
     transactions, devices, accounts = [], [], []
 
     chain = [f"chain_node_{i}@upi" for i in range(1, 6)]
     for node in chain:
         accounts.append({"account_id": node, "account_age_days": np.random.randint(50, 300)})
-        devices.append({"account_id": node, "device_id": f"device_{hash(node) % 10000}"})
+        devices.append({"account_id": node, "device_id": f"dev_chain_{node.split('@')[0]}"})
 
     amount = 25000
     base = BASE_TIME + timedelta(hours=6)
@@ -127,9 +109,6 @@ def create_chain_laundering_scenario():
     return transactions, accounts, devices
 
 
-# ============================================================================
-# SCENARIO 4: DEVICE-BASED MULE RING
-# ============================================================================
 def create_device_ring_scenario():
     transactions, devices, accounts = [], [], []
 
@@ -152,18 +131,14 @@ def create_device_ring_scenario():
     return transactions, accounts, devices
 
 
-# ============================================================================
-# SCENARIO 5: RAPID ONBOARDING FRAUD
-# ============================================================================
 def create_rapid_onboarding_scenario():
     transactions, devices, accounts = [], [], []
 
     new_mule = "new_mule_account@upi"
     accounts.append({"account_id": new_mule, "account_age_days": 1})
-    devices.append({"account_id": new_mule, "device_id": "device_burner_001"})
+    devices.append({"account_id": new_mule, "device_id": "device_new_mule"})
 
     base = BASE_TIME + timedelta(hours=0, minutes=30)
-    # Bot-like burst — 8 receive txns in ~20 minutes
     for idx in range(8):
         src = f"source_{random.randint(1000, 9999)}@upi"
         transactions.append({
@@ -177,7 +152,7 @@ def create_rapid_onboarding_scenario():
     for idx in range(5):
         transactions.append({
             "sender": new_mule,
-            "receiver": f"cash_out_{random.randint(1000, 9999)}@upi",
+            "receiver": f"cashout_{idx}@upi",
             "amount": int(total_in * 0.18),
             "timestamp": (base + timedelta(minutes=25 + idx * 3)).isoformat(),
         })
@@ -185,9 +160,6 @@ def create_rapid_onboarding_scenario():
     return transactions, accounts, devices
 
 
-# ============================================================================
-# SCENARIO 6: NIGHT-TIME SMURFING (Structuring + odd hours)
-# ============================================================================
 def create_smurfing_scenario():
     transactions, devices, accounts = [], [], []
 
@@ -195,39 +167,34 @@ def create_smurfing_scenario():
     accounts.append({"account_id": smurf_acc, "account_age_days": 60})
     devices.append({"account_id": smurf_acc, "device_id": "device_smurf_001"})
 
-    # Night-time small transactions to stay under radar
-    base = datetime(2026, 2, 10, 1, 0, 0)  # 1 AM
+    base = datetime(2026, 2, 10, 1, 0, 0)
     for i in range(12):
         target = f"smurf_target_{i}@upi"
         transactions.append({
             "sender": smurf_acc, "receiver": target,
-            "amount": np.random.randint(900, 2000),  # Structuring: stay small
+            "amount": np.random.randint(900, 2000),
             "timestamp": (base + timedelta(minutes=i * 8 + random.randint(0, 5))).isoformat(),
         })
         if i < 6:
             accounts.append({"account_id": target, "account_age_days": np.random.randint(100, 400)})
-            devices.append({"account_id": target, "device_id": f"device_st_{i}"})
+            devices.append({"account_id": target, "device_id": f"dev_smurf_target_{i}"})
 
     return transactions, accounts, devices
 
 
-# ============================================================================
-# SCENARIO 7: MULTI-DEVICE SPOOFING
-# ============================================================================
 def create_multi_device_scenario():
     transactions, devices, accounts = [], [], []
 
     spoofer = "spoofer_account@upi"
     accounts.append({"account_id": spoofer, "account_age_days": 15})
 
-    # Same account, 6 different devices
     for d in range(6):
-        devices.append({"account_id": spoofer, "device_id": f"spoofed_device_{d:03d}"})
+        devices.append({"account_id": spoofer, "device_id": f"device_spoof_{d:03d}"})
 
     base = BASE_TIME + timedelta(hours=10)
     for i in range(6):
         transactions.append({
-            "sender": f"victim_{random.randint(100, 999)}@upi",
+            "sender": f"source_spoof_{i}@upi",
             "receiver": spoofer,
             "amount": np.random.randint(4000, 15000),
             "timestamp": _rand_ts(base, (i, i + 2)),
@@ -236,16 +203,13 @@ def create_multi_device_scenario():
     return transactions, accounts, devices
 
 
-# ============================================================================
-# LEGITIMATE BACKGROUND TRAFFIC
-# ============================================================================
 def create_legitimate_background_traffic(num_accounts=20):
     transactions, devices, accounts = [], [], []
 
     for i in range(num_accounts):
         acc = f"legitimate_{i}@upi"
         accounts.append({"account_id": acc, "account_age_days": np.random.randint(100, 900)})
-        devices.append({"account_id": acc, "device_id": f"device_{i}"})
+        devices.append({"account_id": acc, "device_id": f"dev_legit_{i:03d}"})
 
     base = BASE_TIME - timedelta(hours=24)
     for _ in range(40):
@@ -257,15 +221,12 @@ def create_legitimate_background_traffic(num_accounts=20):
             "sender": f"legitimate_{s_idx}@upi",
             "receiver": f"legitimate_{r_idx}@upi",
             "amount": np.random.randint(200, 5000),
-            "timestamp": _rand_ts(base, (0, 72), 60),  # Spread over 3 days
+            "timestamp": _rand_ts(base, (0, 72), 60),
         })
 
     return transactions, accounts, devices
 
 
-# ============================================================================
-# MAIN GENERATOR
-# ============================================================================
 def generate_enhanced_dataset():
     all_txns, all_accounts, all_devices = [], [], []
 

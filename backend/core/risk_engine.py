@@ -1,18 +1,6 @@
+# Weighted ensemble of all 5 risk signals with boost
 def aggregate_risk(behavioral, graph, device, temporal=0, ml_anomaly=0):
-    """
-    Advanced risk aggregation with multi-signal correlation boosting.
-    
-    Weights (5-factor model):
-      Graph      = 40%  (strongest structural signal)
-      Behavioral = 25%  (velocity & flow anomalies)
-      Device     = 15%  (device fingerprinting)
-      Temporal   = 10%  (time-based anomalies)
-      ML         = 10%  (unsupervised anomaly detection)
-    
-    Applies confidence amplification when multiple independent signals align.
-    """
 
-    # Base weighted score
     base_score = (
         0.25 * behavioral
         + 0.40 * graph
@@ -21,7 +9,6 @@ def aggregate_risk(behavioral, graph, device, temporal=0, ml_anomaly=0):
         + 0.10 * ml_anomaly
     )
 
-    # CONFIDENCE BOOSTING: When multiple independent signals align
     boost = 0
     active_signals = sum([
         behavioral >= 25,
@@ -31,7 +18,6 @@ def aggregate_risk(behavioral, graph, device, temporal=0, ml_anomaly=0):
         ml_anomaly >= 40,
     ])
 
-    # Multi-signal agreement
     if active_signals >= 4:
         boost += 20
     elif active_signals >= 3:
@@ -39,14 +25,12 @@ def aggregate_risk(behavioral, graph, device, temporal=0, ml_anomaly=0):
     elif active_signals >= 2:
         boost += 8
 
-    # Strong pair correlations
     if graph >= 30 and device >= 15:
         boost += 10
 
     if behavioral >= 30 and graph >= 30:
         boost += 8
 
-    # Extreme signal correlation
     if behavioral >= 40 and graph >= 40 and device >= 30:
         boost += 12
 
@@ -56,13 +40,6 @@ def aggregate_risk(behavioral, graph, device, temporal=0, ml_anomaly=0):
 
 
 def risk_level(score):
-    """
-    Risk classification with clear thresholds:
-    - CRITICAL: 85+ (immediate block/freeze)
-    - HIGH: 70-84 (strong mule indicators, needs investigation)
-    - MEDIUM: 40-69 (suspicious patterns, monitor)
-    - LOW: <40 (likely legitimate)
-    """
     if score >= 85:
         return "CRITICAL"
     elif score >= 70:
@@ -74,10 +51,6 @@ def risk_level(score):
 
 
 def get_risk_confidence(score):
-    """
-    Returns confidence level based on score height and separation.
-    Helps interpret how certain the mule detection is.
-    """
     if score >= 85:
         return "VERY HIGH"
     elif score >= 70:
@@ -91,7 +64,6 @@ def get_risk_confidence(score):
 
 
 def get_recommended_action(risk_lvl):
-    """Return recommended action based on risk level."""
     actions = {
         "CRITICAL": "BLOCK IMMEDIATELY - Freeze account, alert compliance, file SAR",
         "HIGH": "INVESTIGATE - Manual review within 24h, enhanced monitoring",

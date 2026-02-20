@@ -3,7 +3,6 @@ import Plot from 'react-plotly.js';
 import Icon from './Icon';
 
 const DARK_LAYOUT = {
-  // template: 'plotly_white',
   paper_bgcolor: 'rgba(0,0,0,0)',
   plot_bgcolor: 'rgba(0,0,0,0)',
   margin: { l: 50, r: 20, t: 40, b: 50 },
@@ -15,7 +14,6 @@ const ML_COLORS = { ANOMALOUS: '#ef4444', SUSPICIOUS: '#f97316', NORMAL: '#22c55
 export default function MLInsights({ data }) {
   const scores = data.scores;
 
-  /* ── ML scatter (by label, preserving index) ── */
   const mlTraces = useMemo(() => {
     const indexed = scores.map((s, i) => ({ ...s, idx: i }));
     return ['ANOMALOUS', 'SUSPICIOUS', 'NORMAL'].map(label => {
@@ -32,7 +30,6 @@ export default function MLInsights({ data }) {
     });
   }, [scores]);
 
-  /* ── ML vs Rule-Based correlation ── */
   const corrTrace = {
     type: 'scatter', mode: 'markers',
     x: scores.map(s => s.risk_score),
@@ -42,7 +39,6 @@ export default function MLInsights({ data }) {
     hoverinfo: 'text+x+y',
   };
 
-  /* ── Feature contribution bar ── */
   const avgVals = {
     'Behavioral (25%)': avg(scores, 'behavioral_score'),
     'Graph (40%)':      avg(scores, 'graph_score'),
@@ -110,7 +106,6 @@ export default function MLInsights({ data }) {
         </div>
       </div>
 
-      {/* Feature contribution */}
       <div className="chart-container" style={{ marginTop: '1.2rem' }}>
         <h3>Feature Contribution Analysis</h3>
         <Plot

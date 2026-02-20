@@ -1,9 +1,3 @@
-"""
-UPI Mule Account Detection — FastAPI Backend
-Production-grade REST API for real-time mule risk scoring.
-Includes API-key authentication, rate limiting, structured logging,
-and performance telemetry.
-"""
 
 import os
 import json
@@ -24,7 +18,6 @@ from backend.api.score import score_account, batch_score_accounts
 from backend.utils.data_loader import load_transactions, load_accounts, load_devices
 from backend.core.graph_analysis import build_transaction_graph
 
-# ── Structured Logging ────────────────────────────────────────────────
 LOG_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "logs")
 os.makedirs(LOG_DIR, exist_ok=True)
 
@@ -41,7 +34,6 @@ logger.addHandler(_ch)
 
 
 def audit_log(event: str, **kwargs):
-    """Emit a structured JSON audit log entry."""
     entry = {
         "timestamp": datetime.utcnow().isoformat() + "Z",
         "event": event,
@@ -50,7 +42,6 @@ def audit_log(event: str, **kwargs):
     logger.info(json.dumps(entry, default=str))
 
 
-# ── Performance Telemetry ─────────────────────────────────────────────
 _perf_stats = {
     "requests_total": 0,
     "requests_by_endpoint": defaultdict(int),
@@ -61,10 +52,9 @@ _perf_stats = {
 }
 
 
-# ── Rate Limiter (in-memory, per-IP) ─────────────────────────────────
 _rate_limits: dict = {}
-RATE_LIMIT_WINDOW = 60   # seconds
-RATE_LIMIT_MAX = 120     # requests per window
+RATE_LIMIT_WINDOW = 60
+RATE_LIMIT_MAX = 120
 
 
 def _check_rate_limit(client_ip: str) -> bool:
@@ -78,12 +68,7 @@ def _check_rate_limit(client_ip: str) -> bool:
     return True
 
 
-# ── API Key Security ─────────────────────────────────────────────────
 API_KEY = os.environ.get("MULE_API_KEY", "csic-mule-detect-2026")
-# ALLOW_ORIGINS = os.environ.get(
-#     "CORS_ORIGINS",
-#     "http://localhost:5173,http://localhost:3000,http://127.0.0.1:5173",
-# ).split(",")
 
 ALLOW_ORIGINS = os.environ.get(
     "CORS_ORIGINS",
@@ -94,7 +79,6 @@ api_key_header = APIKeyHeader(name="X-API-Key", auto_error=False)
 
 
 async def verify_api_key(request: Request, api_key: str = Security(api_key_header)):
-    """Verify API key. Docs & health endpoints are exempt."""
     exempt_paths = ["/", "/docs", "/redoc", "/openapi.json", "/health"]
     if request.url.path in exempt_paths:
         return True
@@ -105,7 +89,6 @@ async def verify_api_key(request: Request, api_key: str = Security(api_key_heade
     raise HTTPException(status_code=403, detail="Invalid or missing API key")
 
 
-# ── App Setup ─────────────────────────────────────────────────────────
 app = FastAPI(
     title="UPI Mule Detection API",
     description=(
@@ -129,9 +112,9 @@ app.add_middleware(
 )
 
 
+# Middleware: rate-limits, measures latency, writes audit log
 @app.middleware("http")
 async def telemetry_middleware(request: Request, call_next):
-    """Track response times, rate-limit, and audit every request."""
     client_ip = request.client.host if request.client else "unknown"
     request_id = str(uuid.uuid4())[:8]
 
@@ -169,10 +152,10 @@ async def telemetry_middleware(request: Request, call_next):
     return response
 
 
-# ── Preload data (startup cache) ─────────────────────────────────────
 _cache = {}
 
 
+# Lazy-loads and caches all CSV data plus transaction graph
 def _get_data():
     if "txns" not in _cache:
         txns = load_transactions()
@@ -185,7 +168,6 @@ def _get_data():
     return _cache["txns"], _cache["accounts"], _cache["devices"], _cache["G"]
 
 
-# ── Models ────────────────────────────────────────────────────────────
 class TransactionSimulation(BaseModel):
     sender: str
     receiver: str
@@ -195,8 +177,6 @@ class TransactionSimulation(BaseModel):
 class BatchRequest(BaseModel):
     account_ids: List[str]
 
-
-# ── Endpoints ─────────────────────────────────────────────────────────
 
 @app.get("/")
 def root():
@@ -235,7 +215,6 @@ def health():
 
 @app.get("/score/{account_id}")
 def score(account_id: str):
-    """Score a single account for mule risk in real-time."""
     start = time.time()
     txns, accounts, devices, G = _get_data()
 
@@ -247,7 +226,6 @@ def score(account_id: str):
 
 @app.post("/batch_score")
 def batch_score(req: BatchRequest):
-    """Score multiple accounts in a single batch call."""
     start = time.time()
     txns, accounts, devices, G = _get_data()
 
@@ -260,9 +238,9 @@ def batch_score(req: BatchRequest):
     }
 
 
+# Scores all accounts and returns the full risk summary
 @app.get("/stats")
 def stats():
-    """Get system-wide risk statistics."""
     txns, accounts, devices, G = _get_data()
     unique_accounts = sorted(set(txns["sender"]) | set(txns["receiver"]))
     results = batch_score_accounts(unique_accounts, txns, accounts, devices, G)
@@ -282,12 +260,9 @@ def stats():
     }
 
 
+# Scores sender and receiver then decides allow/flag/block
 @app.post("/simulate")
 def simulate_transaction(txn: TransactionSimulation):
-    """
-    Simulate scoring for a hypothetical transaction.
-    Returns risk assessment for both sender and receiver.
-    """
     start = time.time()
     txns, accounts, devices, G = _get_data()
 
@@ -296,7 +271,6 @@ def simulate_transaction(txn: TransactionSimulation):
     receiver_result = score_account(txn.receiver, txns=txns, accounts=accounts,
                                      devices=devices, G=G)
 
-    # Decision logic
     max_risk = max(sender_result["risk_score"], receiver_result["risk_score"])
     if max_risk >= 70:
         decision = "BLOCK"
@@ -323,10 +297,8 @@ def simulate_transaction(txn: TransactionSimulation):
     }
 
 
-# ── Dashboard API (for React frontend) ───────────────────────────────
-
+# Builds cached dashboard payload with all account scores
 def _get_dashboard_data():
-    """Compute and cache all pre-scored dashboard data."""
     if "dashboard" not in _cache:
         txns, accounts, devices, G = _get_data()
         unique_accounts = sorted(set(txns["sender"]) | set(txns["receiver"]))
@@ -377,13 +349,12 @@ def _get_dashboard_data():
 
 @app.get("/api/dashboard")
 def dashboard():
-    """Return all pre-computed scores and summary for the React dashboard."""
     return _get_dashboard_data()
 
 
+# Returns filtered vis-network nodes and edges for graph view
 @app.get("/api/network")
 def network(max_nodes: int = Query(80), risk_filter: str = Query("all")):
-    """Return graph nodes and edges for vis-network rendering."""
     txns_df, _, _, _ = _get_data()
     data = _get_dashboard_data()
     scores_map = {s["account"]: s for s in data["scores"]}
@@ -429,9 +400,9 @@ def network(max_nodes: int = Query(80), risk_filter: str = Query("all")):
     return {"nodes": nodes, "edges": edges}
 
 
+# Returns timeline transactions, hourly aggregates, and heatmap
 @app.get("/api/timeline")
 def timeline():
-    """Return transaction timeline data for temporal analysis charts."""
     txns_df, _, _, _ = _get_data()
     data = _get_dashboard_data()
     scores_map = {s["account"]: s for s in data["scores"]}
@@ -479,9 +450,9 @@ def timeline():
     }
 
 
+# Generates a full markdown investigation report of flagged accounts
 @app.get("/api/report")
 def report():
-    """Generate an investigation report in Markdown."""
     data = _get_dashboard_data()
     s = data["summary"]
     alerts = [sc for sc in data["scores"] if sc["risk_level"] in ("CRITICAL", "HIGH")]
@@ -540,7 +511,6 @@ Five independent detection signals (ensemble approach):
 
 @app.get("/metrics")
 def metrics():
-    """Performance and operational metrics (SRE / observability)."""
     uptime_seconds = (datetime.utcnow() - datetime.fromisoformat(
         _perf_stats["started_at"].rstrip("Z")
     )).total_seconds()

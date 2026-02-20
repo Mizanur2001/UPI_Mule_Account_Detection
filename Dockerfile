@@ -1,6 +1,3 @@
-# ── UPI Mule Detection Platform — Production Docker Image ──
-# Multi-stage build for minimal attack surface
-
 FROM python:3.11-slim AS base
 
 # Security: non-root user
@@ -8,7 +5,6 @@ RUN groupadd -r muledetect && useradd -r -g muledetect -d /app -s /bin/bash mule
 
 WORKDIR /app
 
-# Install dependencies first (layer caching)
 COPY requirements.txt .
 RUN pip install --no-cache-dir --upgrade pip && \
     pip install --no-cache-dir -r requirements.txt
@@ -19,7 +15,6 @@ COPY data/ ./data/
 COPY scripts/ ./scripts/
 COPY logs/ ./logs/
 
-# Ensure logs directory is writable
 RUN mkdir -p /app/logs && chown -R muledetect:muledetect /app
 
 # Switch to non-root user

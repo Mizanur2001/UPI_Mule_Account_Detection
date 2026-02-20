@@ -41,7 +41,6 @@ export default function RealTimeAPI({ data }) {
       <hr className="divider" />
 
       <div className="grid-row cols-3-2">
-        {/* Live API simulation */}
         <div>
           <h3><Icon name="science" size={20} style={{ marginRight: 6 }} />Live API Simulation</h3>
           <div className="form-group" style={{ marginBottom: '0.8rem' }}>
@@ -66,7 +65,6 @@ export default function RealTimeAPI({ data }) {
           )}
         </div>
 
-        {/* Architecture */}
         <div>
           <h3><Icon name="architecture" size={20} style={{ marginRight: 6 }} />Architecture</h3>
           <pre className="code-block">{`UPI App / Payment Gateway
@@ -172,7 +170,6 @@ export default function RealTimeAPI({ data }) {
         </div>
       )}
 
-      {/* API Endpoints table */}
       <hr className="divider" />
       <h3><Icon name="assignment" size={20} style={{ marginRight: 6 }} />API Endpoints</h3>
       <div className="data-table-wrapper" style={{ maxHeight: 'none' }}>

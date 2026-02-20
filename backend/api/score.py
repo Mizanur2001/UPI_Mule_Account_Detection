@@ -7,6 +7,7 @@ from backend.core.ml_anomaly import ml_anomaly_detection
 from backend.core.risk_engine import aggregate_risk, risk_level, get_risk_confidence, get_recommended_action
 
 
+# Runs all 5 signals and returns combined risk for one account
 def score_account(account_id, txns=None, accounts=None, devices=None, G=None,
                   cycles=None, _graph_cache=None, _ml_cache=None):
     if txns is None:
@@ -16,10 +17,8 @@ def score_account(account_id, txns=None, accounts=None, devices=None, G=None,
     if devices is None:
         devices = load_devices()
 
-    # Filter transactions for this account
     account_txns = txns[(txns["sender"] == account_id) | (txns["receiver"] == account_id)]
 
-    # Handle missing account metadata safely
     account_meta_rows = accounts[accounts["account_id"] == account_id]
     if not account_meta_rows.empty:
         account_meta = account_meta_rows.iloc[0]
@@ -30,7 +29,6 @@ def score_account(account_id, txns=None, accounts=None, devices=None, G=None,
     if G is None:
         G = build_transaction_graph(txns)
 
-    # Use batch cache if provided (avoids re-running expensive graph algos)
     if _graph_cache is not None and account_id in _graph_cache:
         graph_score, g_reasons = _graph_cache[account_id]
     else:
@@ -38,10 +36,8 @@ def score_account(account_id, txns=None, accounts=None, devices=None, G=None,
 
     device_score, d_reasons = device_risk(account_id, devices)
 
-    # Temporal analysis
     temporal_score, t_reasons = temporal_risk(account_id, account_txns)
 
-    # ML anomaly score
     ml_score = 0
     ml_label = "N/A"
     if _ml_cache is not None and account_id in _ml_cache:
@@ -78,16 +74,10 @@ def score_account(account_id, txns=None, accounts=None, devices=None, G=None,
     }
 
 
+# Batch-scores accounts with precomputed graph and ML caches
 def batch_score_accounts(account_ids, txns, accounts, devices, G):
-    """
-    Score all accounts in one pass. Graph analysis runs ONCE for the
-    entire graph, then each account just does a dict lookup.
-    ML anomaly detection also runs batch-wide for ensemble scoring.
-    Returns dict {account_id: score_result_dict}
-    """
     graph_cache = batch_graph_risk(G)
 
-    # Run ML anomaly detection in batch (Isolation Forest + Z-score)
     ml_cache = ml_anomaly_detection(list(account_ids), txns, accounts, devices)
 
     results = {}

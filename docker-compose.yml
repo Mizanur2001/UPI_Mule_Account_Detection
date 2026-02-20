@@ -1,6 +1,3 @@
-# UPI Mule Detection Platform — Docker Compose
-# Run: docker-compose up --build
-
 version: "3.9"
 
 services:
