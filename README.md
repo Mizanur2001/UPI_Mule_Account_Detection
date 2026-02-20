@@ -1,101 +1,152 @@
-# FinGuard - UPI Mule Account Detection 
 
-A **MVP** for detecting mule accounts using a 5-factor risk model: behavioral analysis, graph pattern detection, device correlation, temporal anomaly detection, and ML-based anomaly scoring.
+# FinGuard - UPI Mule Account Detection System
+
+This project is a prototype platform to detect mule accounts in UPI (Unified Payments Interface) transactions. It combines rule-based, graph-based, device-based, temporal, and machine learning analysis to flag suspicious accounts. The system includes a backend API, a modern dashboard, and tools for data generation and testing.
 
 ---
 
-## Key Features
+## What It Does
 
-**5-Signal Detection Engine**
-- Behavioral analysis (velocity, pass-through ratios, new accounts, volume spikes)
-- Graph-based patterns (stars, distributors, chains, circular networks, relay nodes)
-- Device correlation (concentration scoring, multi-device control)
-- Temporal analysis (burst detection, odd-hour activity, velocity spikes, bot-like uniform timing)
-- ML anomaly detection (Isolation Forest + Z-score ensemble, zero labeled data needed)
+- Analyzes UPI transaction data to find accounts that may be used for money laundering or fraud ("mule accounts").
+- Uses multiple signals: behavior, transaction network patterns, device usage, timing, and ML-based anomaly detection.
+- Provides a web dashboard for real-time monitoring, investigation, and reporting.
 
-**Enterprise Dashboard (8 Tabs)**
-- Command Center with real-time metrics & signal heatmap
-- Risk Analysis with **account search**, filters, sorting & forensic drill-down
-- ML Insights with feature contribution analysis
-- Interactive network graph with risk overlay
-- Transaction timeline analysis
-- Alert management console
-- Real-time API testing interface
-- About / How It Works documentation
+---
 
-**Production Security** (v2.1.0)
-- API-key authentication (`X-API-Key` header)
+## Main Features
+
+- **5-factor risk scoring:**
+    - Behavioral: unusual activity, new accounts, pass-through, spikes
+    - Graph: star, chain, circular, relay, distributor patterns
+    - Device: shared or spoofed devices
+    - Temporal: bursts, odd hours, bot-like timing
+    - ML anomaly: Isolation Forest (custom NumPy), Z-score
+- **Dashboard:**
+    - Tabs for command center, risk analysis, ML insights, network graph, timeline, alerts, API testing, and documentation
+- **API:**
+    - FastAPI backend with endpoints for scoring, simulation, stats, and more
+- **Security:**
+    - API-key, rate limiting, CORS, audit logging, non-root Docker
+- **Customizable:**
+    - Change risk weights, thresholds, and add new detection patterns easily
+
+---
+
+
+## How to Run
+
+### Local
+
+1. Create a Python virtual environment and activate it
+2. Install dependencies:
+    ```bash
+    pip install -r requirements.txt
+    ```
+3. Start backend:
+    ```bash
+    uvicorn backend.app:app --reload
+    ```
+4. To run the React frontend (recommended for most users):
+    ```bash
+    cd frontend
+    npm install
+    npm run dev
+    ```
+    - Open http://localhost:3000
+
+---
+
+## Dashboard Overview
+
+- **Command Center:** Key metrics and risk heatmap
+- **Risk Analysis:** Search, filter, and investigate flagged accounts
+- **ML Insights:** Visualize anomaly scores
+- **Network Graph:** Explore transaction patterns
+- **Timeline:** See activity over time
+- **Real-Time API:** Test API endpoints live
+- **About:** Documentation and system info
+
+---
+
+## How Detection Works
+
+1. **Behavioral:** Flags new, fast, or high-volume accounts
+2. **Graph:** Finds suspicious network patterns (e.g., many inflows to one outflow)
+3. **Device:** Detects shared or spoofed devices
+4. **Temporal:** Looks for bursts, odd hours, or bot-like timing
+5. **ML Anomaly:** Uses unsupervised ML to spot outliers
+
+All signals are combined into a final risk score. Accounts are labeled as LOW, MEDIUM, HIGH, or CRITICAL risk, with recommended actions.
+
+---
+
+## API Endpoints (Backend)
+
+- `GET /health` – Health check
+- `GET /score/{account_id}` – Score a single account
+- `POST /batch_score` – Score multiple accounts
+- `POST /simulate` – Simulate a transaction
+- `GET /api/dashboard` – Dashboard data
+- `GET /api/network` – Network graph data
+- `GET /api/timeline` – Timeline data
+- `GET /api/report` – Investigation report
+- `GET /metrics` – Performance metrics
+
+See http://localhost:8000/docs for full API documentation.
+
+---
+
+## Project Structure
+
+```
+UPI_Mule_Account_Detection/
+├── backend/      # FastAPI backend and risk logic
+├── frontend/     # React dashboard
+├── data/         # Sample data (transactions, accounts, devices)
+├── models/       # ML model files
+├── logs/         # Audit logs
+├── scripts/      # Data generators
+├── docs/         # Architecture and demo docs
+├── Dockerfile    # Production container
+├── docker-compose.yml
+├── requirements.txt
+└── README.md
+```
+
+---
+
+## Customization
+
+- Change risk thresholds and weights in `backend/core/risk_engine.py`
+- Add new detection logic in `backend/core/`
+- Tune ML model in `backend/core/ml_anomaly.py`
+- Add new test scenarios in `scripts/enhanced_data_generator.py`
+
+---
+
+## Testing
+
+Run backend and system tests:
+```bash
+python test_backend.py
+python test_system.py
+```
+
+---
+
+## Security & Compliance
+
+- API-key authentication (X-API-Key header)
 - Rate limiting (120 req/min per IP)
-- CORS whitelisting (no wildcard `*`)
-- Structured JSON audit logging (every request)
+- CORS whitelisting
+- Structured audit logging
+- Input validation (Pydantic)
 - Non-root Docker container
-- Request telemetry with `X-Request-Id` & `X-Response-Time` headers
-
-**ML Innovation**
-- Custom Isolation Forest — pure NumPy, no scikit-learn (portable, ~200 lines)
-- Model persistence (save/load trained models)
-- Permutation-based feature importance
-- SHAP-like per-account explainability
-- Z-score statistical ensemble (70/30)
-
-**Deployment Ready**
-- Dockerfile (multi-stage, non-root, health-checked)
-- docker-compose.yml (backend + frontend)
-- Performance metrics endpoint (`/metrics`)
-- Container health checks
-
-**Explainable Results**
-- 3-5 specific evidence items per account
-- Confidence levels (VERY HIGH, HIGH, MODERATE, LOW, MINIMAL)
-- Recommended actions per risk level (BLOCK / INVESTIGATE / MONITOR / ALLOW)
-- Component breakdown (behavioral + graph + device + temporal + ML)
-
-**Production Architecture**
-- FastAPI v2.1.0 backend with security middleware
-- Batch processing with graph & ML caching
-- Lightweight Isolation Forest (pure NumPy, no scikit-learn dependency)
-- Efficient graph algorithms (O(V·depth) instead of exponential)
-- Transaction simulation endpoint for real-time decisioning
-
-**Validated Test Scenarios**
-- 5 known mule account patterns (all detected as HIGH/CRITICAL risk)
-- 25+ legitimate background accounts
-- Realistic transaction flows with timestamps
+- Request tracing (X-Request-Id)
 
 ---
 
-## Quick Start (2 Minutes)
 
-### Option A: Docker (Recommended)
-```bash
-docker-compose up --build
-```
-- Backend API: **http://localhost:8000** (auto health-checked)
-- Frontend Dashboard: **http://localhost:5173**
-- API Docs: **http://localhost:8000/docs**
-
-### Option B: Local Setup
-```bash
-python -m venv venv
-.\venv\Scripts\Activate        # Windows
-# or: source venv/bin/activate # Linux/macOS
-
-pip install -r requirements.txt
-```
-
-### 2. Generate Test Data
-```bash
-python scripts/enhanced_data_generator.py
-```
-
-### 3. Run Dashboard
-```bash
-python -m streamlit run dashboard/dashboard.py
-```
-
-Opens at: **http://localhost:8501**
-
----
 
 ## Dashboard Walkthrough
 
@@ -106,7 +157,6 @@ Opens at: **http://localhost:8501**
 | **ML Insights** | Isolation Forest & Z-score anomaly visualization |
 | **Network Graph** | Interactive transaction graph with risk-based coloring |
 | **Timeline** | Temporal analysis of transaction patterns |
-| **Alerts** | Alert management console for flagged accounts |
 | **Real-Time API** | Live API testing and transaction simulation |
 | **About** | Algorithm explanation, scoring formula, architecture |
 
@@ -366,20 +416,6 @@ iforest = IsolationForestLite(
 ensemble_scores = 0.7 * anomaly_scores + 0.3 * z_normalized
 ```
 
-### Add Custom Mule Scenarios
-Edit `scripts/enhanced_data_generator.py` and add your pattern.
-
----
-
-## Documentation
-
-- **[DEPLOYMENT_GUIDE.md](DEPLOYMENT_GUIDE.md)** – Setup, usage, troubleshooting, customization
-- **[STAGE_III_SUMMARY.md](STAGE_III_SUMMARY.md)** – What's been implemented, improvements vs. original
-- **[IMPROVEMENT_IDEAS.md](IMPROVEMENT_IDEAS.md)** – Future enhancement roadmap
-- **[docs/demo_flow.md](docs/demo_flow.md)** – Demo walkthrough for judges
-
----
-
 
 ## What Works
 
@@ -393,7 +429,6 @@ ML-based unsupervised anomaly flagging
 Real-time transaction simulation with BLOCK/FLAG/ALLOW  
 Interactive network visualization  
 Detailed forensic drill-down  
-Alert management console  
 Auto-generated investigation reports  
 
 
