@@ -1,4 +1,4 @@
-const BASE = 'https://upibackend.mizanur.in';
+const BASE = 'http://127.0.0.1:8000';
 
 export async function fetchDashboardData() {
   const res = await fetch(`${BASE}/api/dashboard`);

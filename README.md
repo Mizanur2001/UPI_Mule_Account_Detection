@@ -1,22 +1,19 @@
-# 🚨 UPI Mule Account Detection – CSIC Stage III MVP
+# FinGuard - UPI Mule Account Detection 
 
-> **Cyber Security Innovation Challenge (CSIC) 1.0 – Stage III**  
-> Problem: *Mule Accounts & Collusive Fraud in UPI*
-
-A **production-ready MVP** for detecting mule accounts using a 5-factor risk model: behavioral analysis, graph pattern detection, device correlation, temporal anomaly detection, and ML-based anomaly scoring.
+A **MVP** for detecting mule accounts using a 5-factor risk model: behavioral analysis, graph pattern detection, device correlation, temporal anomaly detection, and ML-based anomaly scoring.
 
 ---
 
-## 🎯 Key Features
+## Key Features
 
-✅ **5-Signal Detection Engine**
+**5-Signal Detection Engine**
 - Behavioral analysis (velocity, pass-through ratios, new accounts, volume spikes)
 - Graph-based patterns (stars, distributors, chains, circular networks, relay nodes)
 - Device correlation (concentration scoring, multi-device control)
 - Temporal analysis (burst detection, odd-hour activity, velocity spikes, bot-like uniform timing)
 - ML anomaly detection (Isolation Forest + Z-score ensemble, zero labeled data needed)
 
-✅ **Enterprise Dashboard (8 Tabs)**
+**Enterprise Dashboard (8 Tabs)**
 - Command Center with real-time metrics & signal heatmap
 - Risk Analysis with **account search**, filters, sorting & forensic drill-down
 - ML Insights with feature contribution analysis
@@ -26,7 +23,7 @@ A **production-ready MVP** for detecting mule accounts using a 5-factor risk mod
 - Real-time API testing interface
 - About / How It Works documentation
 
-✅ **Production Security** (v2.1.0)
+**Production Security** (v2.1.0)
 - API-key authentication (`X-API-Key` header)
 - Rate limiting (120 req/min per IP)
 - CORS whitelisting (no wildcard `*`)
@@ -34,40 +31,40 @@ A **production-ready MVP** for detecting mule accounts using a 5-factor risk mod
 - Non-root Docker container
 - Request telemetry with `X-Request-Id` & `X-Response-Time` headers
 
-✅ **ML Innovation**
+**ML Innovation**
 - Custom Isolation Forest — pure NumPy, no scikit-learn (portable, ~200 lines)
 - Model persistence (save/load trained models)
 - Permutation-based feature importance
 - SHAP-like per-account explainability
 - Z-score statistical ensemble (70/30)
 
-✅ **Deployment Ready**
+**Deployment Ready**
 - Dockerfile (multi-stage, non-root, health-checked)
 - docker-compose.yml (backend + frontend)
 - Performance metrics endpoint (`/metrics`)
 - Container health checks
 
-✅ **Explainable Results**
+**Explainable Results**
 - 3-5 specific evidence items per account
 - Confidence levels (VERY HIGH, HIGH, MODERATE, LOW, MINIMAL)
 - Recommended actions per risk level (BLOCK / INVESTIGATE / MONITOR / ALLOW)
 - Component breakdown (behavioral + graph + device + temporal + ML)
 
-✅ **Production Architecture**
+**Production Architecture**
 - FastAPI v2.1.0 backend with security middleware
 - Batch processing with graph & ML caching
 - Lightweight Isolation Forest (pure NumPy, no scikit-learn dependency)
 - Efficient graph algorithms (O(V·depth) instead of exponential)
 - Transaction simulation endpoint for real-time decisioning
 
-✅ **Validated Test Scenarios**
+**Validated Test Scenarios**
 - 5 known mule account patterns (all detected as HIGH/CRITICAL risk)
 - 25+ legitimate background accounts
 - Realistic transaction flows with timestamps
 
 ---
 
-## 🚀 Quick Start (2 Minutes)
+## Quick Start (2 Minutes)
 
 ### Option A: Docker (Recommended)
 ```bash
@@ -100,22 +97,22 @@ Opens at: **http://localhost:8501**
 
 ---
 
-## 📊 Dashboard Walkthrough
+## Dashboard Walkthrough
 
 | Tab | Purpose |
 |-----|---------|
-| **📊 Command Center** | Overview metrics, risk distribution, component analysis |
-| **🎯 Risk Analysis** | Filter, sort, drill-down into individual accounts with evidence |
-| **🧠 ML Insights** | Isolation Forest & Z-score anomaly visualization |
-| **🕸️ Network Graph** | Interactive transaction graph with risk-based coloring |
-| **⏱️ Timeline** | Temporal analysis of transaction patterns |
-| **🚨 Alerts** | Alert management console for flagged accounts |
-| **⚡ Real-Time API** | Live API testing and transaction simulation |
-| **📖 About** | Algorithm explanation, scoring formula, architecture |
+| **Command Center** | Overview metrics, risk distribution, component analysis |
+| **Risk Analysis** | Filter, sort, drill-down into individual accounts with evidence |
+| **ML Insights** | Isolation Forest & Z-score anomaly visualization |
+| **Network Graph** | Interactive transaction graph with risk-based coloring |
+| **Timeline** | Temporal analysis of transaction patterns |
+| **Alerts** | Alert management console for flagged accounts |
+| **Real-Time API** | Live API testing and transaction simulation |
+| **About** | Algorithm explanation, scoring formula, architecture |
 
 ---
 
-## 🔍 Detection Algorithm
+## Detection Algorithm
 
 ### Five Independent Risk Signals
 
@@ -171,7 +168,7 @@ Score = min(Base + Boost, 100)
 
 ---
 
-## 🎬 Test Scenarios (Built-in)
+## Test Scenarios (Built-in)
 
 Your test data includes these known mule accounts:
 
@@ -185,7 +182,7 @@ Your test data includes these known mule accounts:
 
 ---
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 MVP/
@@ -239,7 +236,7 @@ MVP/
 
 ---
 
-## ⚙️ Backend API (For Integration)
+## Backend API (For Integration)
 
 Start server:
 ```bash
@@ -307,7 +304,7 @@ API docs available at: **http://127.0.0.1:8000/docs** (Swagger UI) and **/redoc*
 
 ---
 
-## 🧪 Testing
+## Testing
 
 ```bash
 # Backend unit tests
@@ -321,7 +318,7 @@ Output shows all CRITICAL/HIGH risk accounts detected with evidence and signal c
 
 ---
 
-## 📈 Performance
+## Performance
 
 - **Full analysis:** < 2 seconds for 50+ accounts
 - **Batch scoring:** One-pass graph cycle detection + batch ML inference
@@ -331,7 +328,7 @@ Output shows all CRITICAL/HIGH risk accounts detected with evidence and signal c
 
 ---
 
-## 🛠️ Customization
+## Customization
 
 ### Adjust Risk Thresholds
 Edit `backend/core/risk_engine.py`:
@@ -374,7 +371,7 @@ Edit `scripts/enhanced_data_generator.py` and add your pattern.
 
 ---
 
-## 📚 Documentation
+## Documentation
 
 - **[DEPLOYMENT_GUIDE.md](DEPLOYMENT_GUIDE.md)** – Setup, usage, troubleshooting, customization
 - **[STAGE_III_SUMMARY.md](STAGE_III_SUMMARY.md)** – What's been implemented, improvements vs. original
@@ -383,104 +380,53 @@ Edit `scripts/enhanced_data_generator.py` and add your pattern.
 
 ---
 
-## ✨ Stage III Improvements
 
-| Feature | Previous | Current |
-|---------|----------|---------|
-| Detection Signals | 3 components | 5-factor model (+ temporal + ML) |
-| Behavioral Detection | Basic velocity | Pass-through ratio + new account + amounts + volume |
-| Graph Algorithms | Exponential cycles | O(V·depth) DFS with relay node detection |
-| Device Detection | Simple count | Concentration scoring with multi-device analysis |
-| Temporal Analysis | None | Burst, odd-hour, velocity spike, bot-signature detection |
-| ML Detection | None | Isolation Forest + Z-score ensemble (zero labels) |
-| Risk Levels | 3 (H/M/L) | 4 (CRITICAL/HIGH/MEDIUM/LOW) with recommended actions |
-| Risk Scoring | 3 weighted signals | 5-factor with multi-signal confidence boosting |
-| Explainability | 1-2 reasons | 3-5 detailed evidence items with signal counts |
-| Dashboard | 5 tabs | 8 professional tabs (ML, Timeline, Alerts, API) |
-| API | 2 endpoints | 6 endpoints (health, stats, simulate, batch) |
-| Exports | None | CSV + Markdown reports |
-| Test Data | Generic | 5 realistic mule scenarios with timestamps |
+## What Works
 
----
+Circular mule network detection (CRITICAL risk)  
+Star aggregator pattern (CRITICAL/HIGH risk)  
+Chain laundering paths (MEDIUM-HIGH detection)  
+New account rapid onboarding (HIGH risk)  
+Device-based fraud rings (HIGH risk)  
+Temporal burst & bot detection  
+ML-based unsupervised anomaly flagging  
+Real-time transaction simulation with BLOCK/FLAG/ALLOW  
+Interactive network visualization  
+Detailed forensic drill-down  
+Alert management console  
+Auto-generated investigation reports  
 
-## 🎯 What Works
-
-✅ Circular mule network detection (CRITICAL risk)  
-✅ Star aggregator pattern (CRITICAL/HIGH risk)  
-✅ Chain laundering paths (MEDIUM-HIGH detection)  
-✅ New account rapid onboarding (HIGH risk)  
-✅ Device-based fraud rings (HIGH risk)  
-✅ Temporal burst & bot detection  
-✅ ML-based unsupervised anomaly flagging  
-✅ Real-time transaction simulation with BLOCK/FLAG/ALLOW  
-✅ Interactive network visualization  
-✅ Detailed forensic drill-down  
-✅ Alert management console  
-✅ Auto-generated investigation reports  
 
 ---
 
-## 🚨 Known Limitations
-
-- Test data is synthetic (use real data for production)
-- Detection optimized for simplified transaction formats
-- Graph algorithm capped at 6-hop cycle detection (configurable)
-- Single-threaded (production: use `--workers N` or Gunicorn)
-
----
-
-## 🔒 Security & Compliance
+## Security & Compliance
 
 | Layer | Implementation | Status |
 |-------|---------------|--------|
-| **Authentication** | API-key via `X-API-Key` header | ✅ Implemented |
-| **Rate Limiting** | 120 req/min per IP (in-memory) | ✅ Implemented |
-| **CORS** | Whitelisted origins only | ✅ Hardened |
-| **Audit Logging** | Structured JSON (`logs/audit.log`) | ✅ Implemented |
-| **Input Validation** | Pydantic schemas on all endpoints | ✅ Implemented |
-| **Container Security** | Non-root user, minimal base image | ✅ Implemented |
-| **Request Tracing** | `X-Request-Id` on every response | ✅ Implemented |
-| **Secrets Management** | Environment variables (`MULE_API_KEY`) | ✅ Configurable |
+| **Authentication** | API-key via `X-API-Key` header | Implemented |
+| **Rate Limiting** | 120 req/min per IP (in-memory) | Implemented |
+| **CORS** | Whitelisted origins only | Hardened |
+| **Audit Logging** | Structured JSON (`logs/audit.log`) | Implemented |
+| **Input Validation** | Pydantic schemas on all endpoints | Implemented |
+| **Container Security** | Non-root user, minimal base image | Implemented |
+| **Request Tracing** | `X-Request-Id` on every response | Implemented |
+| **Secrets Management** | Environment variables (`MULE_API_KEY`) | Configurable |
 
 ---
 
-## 📈 Scalability & Deployment Roadmap
+## Scalability & Deployment Roadmap
 
 | Phase | Capability | Status |
 |-------|-----------|--------|
-| **MVP (Current)** | Docker + Compose, health checks, hot reload | ✅ Done |
-| **Pilot** | Kubernetes manifests, Redis rate limiting, PostgreSQL | 🔜 Planned |
-| **Scale** | Kafka stream ingestion, real-time WebSocket, horizontal autoscaling | 🔜 Planned |
-| **Enterprise** | SSO/OAuth2, RBAC, multi-tenant isolation, SLA monitoring | 🔜 Planned |
+| **MVP (Current)** | Docker + Compose, health checks, hot reload | Done |
+| **Pilot** | Kubernetes manifests, Redis rate limiting, PostgreSQL |  Planned |
+| **Scale** | Kafka stream ingestion, real-time WebSocket, horizontal autoscaling |  Planned |
+| **Enterprise** | SSO/OAuth2, RBAC, multi-tenant isolation, SLA monitoring | Planned |
 
-### Performance Metrics (Current)
-- Single account scoring: **< 50ms**
-- Batch scoring (50 accounts): **< 500ms**
-- Dashboard load: **< 2s**
-- API availability: **99.9%** (Docker health-checked)
 
 ---
 
-## 🎯 Market Fit & End-Use Cases
-
-| User Segment | Use Case |
-|-------------|----------|
-| **UPI Payment Gateways** | Real-time transaction screening (BLOCK/FLAG/ALLOW) |
-| **Banks / NBFCs** | AML compliance — SAR auto-generation, account freeze |
-| **RBI / NPCI** | Systemic mule network detection across ecosystem |
-| **Cyber Crime Cells** | Investigation support — forensic evidence trails |
-| **Fintech / Neobanks** | Onboarding fraud prevention (new account risk scoring) |
-
-### Competitive Differentiators
-1. **Zero labeled data required** — unsupervised ML works from day 1
-2. **5-factor ensemble** — no single-signal dependency
-3. **Graph-first approach** — catches collusive networks (not just individuals)
-4. **Explainable AI** — every score has human-readable evidence
-5. **Lightweight** — pure NumPy ML, no heavy ML framework dependency
-
----
-
-## 📞 Support
+## Support
 
 **For demo/questions:**
 1. Run `python test_backend.py` to verify detection works
@@ -490,18 +436,4 @@ Edit `scripts/enhanced_data_generator.py` and add your pattern.
 5. Read DEPLOYMENT_GUIDE.md for troubleshooting
 
 ---
-
-## 📜 License & Credits
-
-- Part of CSIC 1.0 Stage III Challenge
-- Built with: FastAPI, Streamlit, Pandas, NetworkX, NumPy, Plotly, PyVis
-- ML Engine: Custom Isolation Forest (pure NumPy) + Z-score ensemble
-- Data generation: Enhanced synthetic scenarios with 5 fraud typologies
-- Detection: 5-signal hybrid approach with confidence boosting
-
----
-
-**Status:** ✅ Stage III MVP Complete & Ready for Deployment
-
-**How to Run:** `python -m streamlit run dashboard/dashboard.py`
 
