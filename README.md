@@ -277,9 +277,6 @@ MVP/
 ├── .dockerignore                    # Docker build exclusions
 ├── test_backend.py                  # Backend scoring tests
 ├── test_system.py                   # System integration tests
-├── DEPLOYMENT_GUIDE.md              # Complete setup guide
-├── STAGE_III_SUMMARY.md             # Implementation summary
-├── IMPROVEMENT_IDEAS.md             # Future enhancements
 ├── requirements.txt                 # Python dependencies
 └── README.md                        # This file
 ```
